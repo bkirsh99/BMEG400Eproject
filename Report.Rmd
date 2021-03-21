@@ -1,0 +1,50 @@
+---
+title: 'BMEG 400E/591E Project'
+output:
+  github_document:
+    toc: true
+    toc_depth: 4
+---
+
+# Introduction
+
+  Coronary heart disease (CHD), also known as coronary artery disease (CAD), is the most common cause of death in the world. Many research efforts have been made to identify genomic regions, variants in candidate genes, and environmental factors implicated in the susceptibility to this disease. However, the investigation of individual locus pair in Genome-Wide Association Studies (GWAS) disregards polygenicity, overlooks genetic interactions, and undermines statistical power. Thus, the analysis of enriched processes among the most strongly associated genes in CHD data can improve our understanding of the biochemical and physiologic complexity of this disease.
+A common complementary strategy in GWAS is to perform Gene Set Enrichment Analysis (GSEA) and Pathway Enrichment Analysis (PEA), which test for the association between a phenotype of interest and an entire set of Single Nucleotide Polymorphisms (SNPs) residing in selected genes. By assessing the correlation of disease and genetic variants in a group of functionally related genes, SNP-SNP interactions can be studied in terms of their contribution to more extreme phenotypes, including complex human diseases.
+In comparing GWASs that have been conducted in different populations, distinct sets of SNPs are revealed to be associated with the same disease. Thus, the functional annotation and mapping of SNP data can also be extended to identify geography-based genetic variability operating on entire biochemical pathways. In this case, identifying pathway components that differ in genotype frequency for distinct populations can provide important clues into the mechanisms of race-specific susceptibility to pathogens and prevalence of disease.
+This project seeks to investigate clusters of SNPs with highly differentiated allele frequencies between populations to infer race-specific biological signatures associated with CHD. We hope that this study increases our understanding of complex pathophysiological mechanisms by characterizing the functional overlap of SNPs associated with the same disease across populations. Furthermore, based on the literature about the functional mechanisms of prescription drugs, we hypothesize that population differences in CHD pathways can also predict treatment outcome and be a tool in personalized medicine.
+
+
+# Methods
+
+```{bash, eval=FALSE}
+
+#The GWAS Catalog is currently mapped to genome assembly GRCh38.p13 and dbSNP Build 153.
+
+
+#The International Genome Sample Resource (IGSR) reported approximately 73 million single nucleotide variants (SNVs) and 5 million short insertions/deletions (indels) collected by the 1000 Genomes Project. The sequencing data for its third phase is derived from 2,504 genomes belonging to 26 populations worldwide. In Ensembl, this variants are available in the current GRCh38 build and all alleles are reported on the forward strand (http://ftp.ensembl.org/pub/release-103/variation/gvf/homo_sapiens/).
+
+#head 1000GENOMES-phase_3.gvf.gz ##The first 33 lines are descriptive
+#zcat 1000GENOMES-phase_3.gvf.gz | awk 'NR>33' > 1000GENOMES_data.gvf
+
+
+```
+
+## Quality Control
+
+### Allele frequency analysis to identify strand flipping and data formatting issues
+
+## Analysis
+
+
+```{bash, eval=FALSE}
+
+```
+
+
+```{r}
+
+```
+
+# Results
+
+# Conclusions
