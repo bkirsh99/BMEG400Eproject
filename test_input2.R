@@ -10,6 +10,7 @@ library(ggVennDiagram)
 dir <- "C:/Users/bkirs/Documents/School/BMEG400E/BMEG400Eproject"
 setwd(dir)
 
+#Read data from the original publication ("Population differentiation in allele frequencies of obesity-associated SNPs")
 data <- read_excel("225SNPs26populations.xlsx")
 colnames(data) <- data[2, ] # the second row will be the header
 data <- data[-c(1,2), ]          # removing the first two rows
@@ -17,6 +18,7 @@ data <- data[-c(1,2), ]          # removing the first two rows
 #("population","effect allele number","other allele number","total allele number","effect allele frequency")
 #The remaining columns (138-[3+26*5=133]=5) summarize global population data ("population","effect allele number","other allele number","effect allele frequency","GWAS P-value")
 
+#Determine what populations to investigate
 populations <- c("CEU","ASW","YRI")
 cols <- c("population","effect allele number","other allele number","total allele number","effect allele frequency","GWAS P-value")
 
@@ -24,6 +26,7 @@ SNP.df <- data[,1:3]
 
 MAF.df <- data.frame(row.names= SNP.df$`SNP ID`)
 
+#Create a background "global population" (ALL.df) to use for hypergeometric testing. It is the sum of each column for the populations being interrogated.
 ALL.df <- data.frame(matrix(nrow=nrow(data),ncol=length(cols)))
 colnames(ALL.df) <- cols
 ALL.df$population <- "ALL"
@@ -43,16 +46,6 @@ for(i in seq(from=4, to=ncol(data), by=5)){
     ALL.df["effect allele frequency"] <- as.numeric(ALL.df[["effect allele frequency"]]) + as.numeric(data[["effect allele frequency"]])
   }
 }
-
-#Calculating the hypergeometric distributions using phyper().
-#A random variable X has a hypergeometric distribution if X=x is the number of successes in a sample size of size k (without replacement) when the population contains M successes and N non-successes.
-#For example, the probability of selecting 14 red marbles from a sample of 20 taken from an urn containing 70 red marbles and 30 green marbles is phyper(x=14,m=70,n=30,k=20).
-#Thus, for each SNP, the parameters for this function are:
-#q: number of effect alleles selected from the sample
-#m: total number of effect alleles in the population
-#n: total number of other alleles in the population
-#k:	total number of alleles (effect + other) in the sample
-#lower.tail=TRUE (depletion) or FALSE (enrichment)
 
 #OPTION 1:
 hyper.df <- data.frame()
@@ -97,6 +90,15 @@ table(rowSums(enriched))
 v <- ggvenn(enriched)
 
 #OPTION 3:
+#Calculating the hypergeometric distributions using phyper().
+#A random variable X has a hypergeometric distribution if X=x is the number of successes in a sample size of size k (without replacement) when the population contains M successes and N non-successes.
+#For example, the probability of selecting 14 red marbles from a sample of 20 taken from an urn containing 70 red marbles and 30 green marbles is phyper(x=14,m=70,n=30,k=20).
+#Thus, for each SNP, the parameters for this function are:
+#q: number of effect alleles selected from the sample
+#m: total number of effect alleles in the population
+#n: total number of other alleles in the population
+#k:	total number of alleles (effect + other) in the sample
+#lower.tail=TRUE (depletion) or FALSE (enrichment)
 enrichment.df <- data.frame()
 depletion.df <- data.frame()
 for(i in 1:nrow(ALL.df)){
