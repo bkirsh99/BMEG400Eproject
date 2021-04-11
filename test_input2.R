@@ -171,10 +171,13 @@ enriched_hm2
 #Filter again for for a selected set of SNPs that have enrichment or depletion p-values of at least 10−E100 and have reached genome-wide significance (5 × 10−8) in GWA studies.
 hyperRes_sig2 <- hyperRes_log[!rowSums(hyperRes_log[,-keep] < 10E-100)==0, , drop = FALSE]
 hyperRes_sig2 <- hyperRes_sig2[hyperRes_sig2$`GWAS P-value` < 5E-08,]
+filteredSNPs <- rownames(hyperRes_sig2)
 
-MAF.df["id"] <- rownames(MAF.df) #add GWAS p-val for filtering at 5E-08
+#if in filteredSNPs
+MAF.df["id"] <- rownames(MAF.df)
 MAF_molten.df <- melt(MAF.df, id.vars="id", value.name="MAF", variable.name="Population")
+MAF_filtered.df <- MAF_molten.df[MAF_molten.df$id %in% filteredSNPs ,]
 # p <- ggplot(MAF_molten.df,aes(x=id,y=MAF)) + geom_bar(position="identity", stat="identity") + facet_wrap(~Population,nrow=3)
 p
-q <- ggplot(MAF_molten.df,aes(x=id,y=MAF,fill=Population)) + geom_dotplot(binaxis='y', stackdir='center')
+q <- ggplot(MAF_filtered.df,aes(x=id,y=MAF,fill=Population)) + geom_dotplot(binaxis='y', stackdir='center')
 q
