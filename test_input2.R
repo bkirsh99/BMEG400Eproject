@@ -140,6 +140,16 @@ table(rowSums(depleated))
 v2 <- ggvenn(depleated)
 v2
 
+library(heatmap3)
+log_enriched <- enrichment.df
+log_enriched$CEU <- -log10(log_enriched$CEU)
+log_enriched$ASW <- -log10(log_enriched$ASW)
+log_enriched$YRI <- -log10(log_enriched$YRI)
+
+enriched_hm <- heatmap(as.matrix(log_enriched), Colv = NA, Rowv = NA, hclustfun = function(x) hclust(x,method = 'centroid'), scale = "row")
+enriched_hm
+
+
 
 MAF.df["id"] <- rownames(MAF.df)
 MAF_molten.df <- melt(MAF.df, id.vars="id", value.name="MAF", variable.name="Population")
