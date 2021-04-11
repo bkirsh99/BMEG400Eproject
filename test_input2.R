@@ -127,11 +127,12 @@ for(df in L) {
   colnames(df.tmp) <- populations
   rownames(df.tmp) <- SNP.df$`SNP ID`
   df.tmp$type <- sub(".df","",df)
+  df.tmp$`GWAS P-value` <- as.numeric(data$`GWAS P-value`[match(rownames(df.tmp),data$`SNP ID`)])
   assign(df, df.tmp)
   hyperRes <- rbind(hyperRes,df.tmp)
 }
 
-hyperRes_melted <- melt(hyperRes,id.vars=c(populations,"type"))
+hyperRes_melted <- melt(hyperRes,id.vars=c(populations,"type","GWAS P-value"))
 
 cutoff <- 0.01 / (2*3*225) #To control a family-wise error rate (FWER) of 0.01, we used a raw p-value of 7.41E-6 as cutoff. 
 enrichedFiltered.df  <- data.frame(enrichment.df < cutoff)
@@ -145,10 +146,12 @@ v2 <- ggvenn(depleatedFiltered.df)
 v2
 
 #Combine enrichment and depletion p-scores into a single data structure, where values are log10 transformed.
-#If the effect allele of an SNP is enriched in a population, then the negative of log10 of the enrichment p-value (a positive number) was used to represent the SNP in association with that population in a heatmap. On the other hand, if the allele of an SNP is depleted in a population, the value of log10 of the depletion p-value (a negative number) was used to represent the SNP for that population in the heatmap. 
-hyperRes_sig <- hyperRes_melted[!rowSums(hyperRes_melted < cutoff)==0, , drop = FALSE]
-hyperRes_log <- hyperRes_sig %>% mutate_if(is.numeric, log10)
-hyperRes_log[hyperRes_log$type == "enrichment",] <- hyperRes_log[hyperRes_log$type == "enrichment",] %>% mutate_if(is.numeric, ~ . * -1)
+#If the effect allele of an SNP is enriched in a population, then the negative of log10 of the enrichment p-value (a positive number) was used to represent the SNP in association with that population in a heatmap. On the other hand, if the allele of an SNP is depleted in a population, the value of log10 of the depletion p-value (a negative number) was used to represent the SNP for that population in the heatmap.
+keep <- which(names(hyperRes_melted) %in% c("type", "GWAS P-value"))
+hyperRes_sig <- hyperRes_melted[!rowSums(hyperRes_melted[,-keep] < cutoff)==0,,drop=FALSE]
+hyperRes_log <- hyperRes_sig %>% mutate_at(-keep, log10)
+hyperRes_log0 <- hyperRes_log
+hyperRes_log[hyperRes_log$type == "enrichment",] <- hyperRes_log[hyperRes_log$type == "enrichment",] %>% mutate_at(-keep, ~ . * -1)
 
 library(heatmap3)
 log_enriched <- enrichment.df
@@ -160,12 +163,16 @@ enriched_hm <- heatmap(as.matrix(log_enriched), Colv = NA, Rowv = NA, hclustfun 
 enriched_hm
 
 #Create a matrix from the FWER filtered, combined, log-transformed, and additive inverse-corrected p-values. Then, generate a clustermap.
-hyperRes_matrix <- as.matrix(hyperRes_log[ , -which(names(hyperRes_log) == "type")])
+hyperRes_matrix <- as.matrix(hyperRes_log[ , -keep])
 col_fun = colorRampPalette(c("green", "black", "red"))(1024)
-enriched_hm2 <- heatmap3(hyperRes_matrix, Colv = NA, Rowv = NA, hclustfun = function(x) hclust(x,method = 'centroid'),
-                         scale = "row", col = col_fun)
+enriched_hm2 <- heatmap3(hyperRes_matrix, Colv = NA, Rowv = NA, hclustfun = function(x) hclust(x,method = 'centroid'), col = col_fun, scale = "row")
+enriched_hm2
 
-MAF.df["id"] <- rownames(MAF.df)
+#Filter again for for a selected set of SNPs that have enrichment or depletion p-values of at least 10−E100 and have reached genome-wide significance (5 × 10−8) in GWA studies.
+hyperRes_sig2 <- hyperRes_log[!rowSums(hyperRes_log[,-keep] < 10E-100)==0, , drop = FALSE]
+hyperRes_sig2 <- hyperRes_sig2[hyperRes_sig2$`GWAS P-value` < 5E-08,]
+
+MAF.df["id"] <- rownames(MAF.df) #add GWAS p-val for filtering at 5E-08
 MAF_molten.df <- melt(MAF.df, id.vars="id", value.name="MAF", variable.name="Population")
 # p <- ggplot(MAF_molten.df,aes(x=id,y=MAF)) + geom_bar(position="identity", stat="identity") + facet_wrap(~Population,nrow=3)
 p
