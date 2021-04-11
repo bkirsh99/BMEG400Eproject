@@ -89,6 +89,8 @@ enriched <- data.frame(hyper.df < cutoff)
 table(rowSums(enriched))
 v <- ggvenn(enriched)
 
+#We calculate the significance of enrichment and depletion in the effect allele of each SNP using Fisher’s two-tail exact test (phyper in R).
+#Then, we correct for multiple hypothesis testing using Bonferroni (FWER).
 #OPTION 3:
 #Calculating the hypergeometric distributions using phyper().
 #A random variable X has a hypergeometric distribution if X=x is the number of successes in a sample size of size k (without replacement) when the population contains M successes and N non-successes.
@@ -117,28 +119,36 @@ for(i in 1:nrow(ALL.df)){
   depletion.df <- rbind(depletion.df,b)
 }
 
+hyperRes <- data.frame()
 L <- c("enrichment.df","depletion.df")
 #Assign new column and row names to each dataframe in "L"
 for(df in L) {
   df.tmp <- get(df)
   colnames(df.tmp) <- populations
   rownames(df.tmp) <- SNP.df$`SNP ID`
+  df.tmp$type <- sub(".df","",df)
   assign(df, df.tmp)
+  hyperRes <- rbind(hyperRes,df.tmp)
 }
 
+hyperRes_melted <- melt(hyperRes,id.vars=c(populations,"type"))
+
 cutoff <- 0.01 / (2*3*225) #To control a family-wise error rate (FWER) of 0.01, we used a raw p-value of 7.41E-6 as cutoff. 
-enrichedFiltered.df <- subset(enrichment.df < cutoff)
-depleatedFiltered.df <- subset(depletion.df < cutoff)
+enrichedFiltered.df  <- data.frame(enrichment.df < cutoff)
+depleatedFiltered.df <- data.frame(depletion.df < cutoff)
 
-enriched <- data.frame(enrichment.df < cutoff)
-depleated <- data.frame(depletion.df < cutoff)
-
-table(rowSums(enriched))
-v1 <- ggvenn(enriched)
+table(rowSums(enrichedFiltered.df ))
+v1 <- ggvenn(enrichedFiltered.df )
 v1
-table(rowSums(depleated))
-v2 <- ggvenn(depleated)
+table(rowSums(depleatedFiltered.df))
+v2 <- ggvenn(depleatedFiltered.df)
 v2
+
+#Combine enrichment and depletion p-scores into a single data structure, where values are log10 transformed.
+#If the effect allele of an SNP is enriched in a population, then the negative of log10 of the enrichment p-value (a positive number) was used to represent the SNP in association with that population in a heatmap. On the other hand, if the allele of an SNP is depleted in a population, the value of log10 of the depletion p-value (a negative number) was used to represent the SNP for that population in the heatmap. 
+hyperRes_sig <- hyperRes_melted[!rowSums(hyperRes_melted < cutoff)==0, , drop = FALSE]
+hyperRes_log <- hyperRes_sig %>% mutate_if(is.numeric, log10)
+hyperRes_log[hyperRes_log$type == "enrichment",] <- hyperRes_log[hyperRes_log$type == "enrichment",] %>% mutate_if(is.numeric, ~ . * -1)
 
 library(heatmap3)
 log_enriched <- enrichment.df
@@ -149,11 +159,13 @@ log_enriched$YRI <- -log10(log_enriched$YRI)
 enriched_hm <- heatmap(as.matrix(log_enriched), Colv = NA, Rowv = NA, hclustfun = function(x) hclust(x,method = 'centroid'), scale = "row")
 enriched_hm
 
-
+#Create a matrix from the FWER filtered, combined, log-transformed, and additive inverse-corrected p-values. Then, generate a clustermap.
+hyperRes_matrix <- as.matrix(hyperRes_log[ , -which(names(hyperRes_log) == "type")])
+enriched_hm2 <- heatmap(hyperRes_matrix, Colv = NA, Rowv = NA, hclustfun = function(x) hclust(x,method = 'centroid'), scale = "row")
 
 MAF.df["id"] <- rownames(MAF.df)
 MAF_molten.df <- melt(MAF.df, id.vars="id", value.name="MAF", variable.name="Population")
-p <- ggplot(MAF_molten.df,aes(x=id,y=MAF)) + geom_bar(position="identity", stat="identity") + facet_wrap(~Population,nrow=3)
+# p <- ggplot(MAF_molten.df,aes(x=id,y=MAF)) + geom_bar(position="identity", stat="identity") + facet_wrap(~Population,nrow=3)
 p
 q <- ggplot(MAF_molten.df,aes(x=id,y=MAF,fill=Population)) + geom_dotplot(binaxis='y', stackdir='center')
 q
