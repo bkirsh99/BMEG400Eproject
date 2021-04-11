@@ -161,7 +161,9 @@ enriched_hm
 
 #Create a matrix from the FWER filtered, combined, log-transformed, and additive inverse-corrected p-values. Then, generate a clustermap.
 hyperRes_matrix <- as.matrix(hyperRes_log[ , -which(names(hyperRes_log) == "type")])
-enriched_hm2 <- heatmap(hyperRes_matrix, Colv = NA, Rowv = NA, hclustfun = function(x) hclust(x,method = 'centroid'), scale = "row")
+col_fun = colorRampPalette(c("green", "black", "red"))(1024)
+enriched_hm2 <- heatmap3(hyperRes_matrix, Colv = NA, Rowv = NA, hclustfun = function(x) hclust(x,method = 'centroid'),
+                         scale = "row", col = col_fun)
 
 MAF.df["id"] <- rownames(MAF.df)
 MAF_molten.df <- melt(MAF.df, id.vars="id", value.name="MAF", variable.name="Population")
