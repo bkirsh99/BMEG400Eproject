@@ -14,6 +14,8 @@ setwd(dir)
 data <- read_excel("225SNPs26populations.xlsx") # read the data from the original publication
 colnames(data) <- data[2, ] # the second row is now the header
 data <- data[-c(1,2), ] # and the first two rows can be removed
+SNP_15 <- c("rs6499640","rs11075990","rs9939609","rs7202116","rs7185735","rs9940128","rs1121980","rs17817449","rs8043757","rs8050136","rs1421085","rs1558902","rs12149832","rs62033400","rs17817964")
+data <- data[data$`SNP ID` %in% SNP_15,,drop = FALSE] #filtering by SNPs of interest
 # the first 3 columns contain general SNP information ("SNP ID", "effect allele", and "other allele")
 # the remaining 130 columns contain population-specific information
 # each of the 26 populations takes up 5 subsequent columns ("population", "effect allele number", "other allele number", "total allele number", and "effect allele frequency")
