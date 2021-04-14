@@ -84,7 +84,7 @@ rownames(hyper.df) <- SNP.df$`SNP ID`
 
 hyper_adj.df <- p.adjust(as.matrix(hyper.df))
 
-cutoff <- 0.01 / (2*3*225) #To control a family-wise error rate (FWER) of 0.01, we used a raw p-value of 7.41E-6 as cutoff. 
+cutoff <- 0.01 / (2*3*15) #To control a family-wise error rate (FWER) of 0.01, we used a raw p-value of 7.41E-6 as cutoff. 
 pvalFiltered.df <- subset(hyper.df < cutoff)
 
 enriched <- data.frame(hyper.df < cutoff)
@@ -136,7 +136,7 @@ for(df in L) {
 
 hyperRes_melted <- melt(hyperRes,id.vars=c(populations,"type","GWAS P-value"))
 
-cutoff <- 0.01 / (2*3*225) #To control a family-wise error rate (FWER) of 0.01, we used a raw p-value of 7.41E-6 as cutoff. 
+cutoff <- 0.01 / (2*3*15) #To control a family-wise error rate (FWER) of 0.01, we used a raw p-value of 7.41E-6 as cutoff. 
 enrichedFiltered.df  <- data.frame(enrichment.df < cutoff)
 depleatedFiltered.df <- data.frame(depletion.df < cutoff)
 
