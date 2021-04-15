@@ -1,44 +1,94 @@
 ---
-title: 'BMEG 400E/591E Project'
-output:
-  github_document:
-    toc: true
-    toc_depth: 4
+output: 
+  pdf_document:
+    fig_caption: true
+title: "Project Report: A Reproduction Analysis of Allele Frequency Differences Between Populations"
+thanks: "The original study, **Population differentiation in allele frequencies of obesity-associated SNPs**, is available in [BMC Genomics] (https://bmcgenomics.biomedcentral.com/articles/10.1186/s12864-017-4262-9#Equ1)."
+author:
+- name: Bianca Kirsh
+  affiliation: University of British Columbia
+- name: Josh de Freitas
+  affiliation: University of British Columbia
+abstract: "This document presents the re-analysis of a published genomics study, including the written report, integrated code, and graphs."
+keywords: "genomics, analysis"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+geometry: margin=1in
+fontfamily: mathpazo
+fontsize: 11pt
+# spacing: double
+endnote: no
 ---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(cache=TRUE,
+                      echo=TRUE,
+                      message=FALSE,
+                      warning=FALSE,
+                      fig.path='figs/',
+                      cache.path = '_cache/',
+                      fig.process = function(x) {
+                      x2 = sub('-\\d+([.][a-z]+)$', '\\1', x)
+                      if (file.rename(x, x2)) x2 else x
+                      })
+```
+
+```{r}
+# install any of these that you might not have already
+library(readxl)
+library(reshape2)
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+library(ggvenn)
+library(heatmap3)
+```
 
 # Introduction
 
-  Coronary heart disease (CHD), also known as coronary artery disease (CAD), is the most common cause of death in the world. Many research efforts have been made to identify genomic regions, variants in candidate genes, and environmental factors implicated in the susceptibility to this disease. However, the investigation of individual locus pair in Genome-Wide Association Studies (GWAS) disregards polygenicity, overlooks genetic interactions, and undermines statistical power. Thus, the analysis of enriched processes among the most strongly associated genes in CHD data can improve our understanding of the biochemical and physiologic complexity of this disease.
-A common complementary strategy in GWAS is to perform Gene Set Enrichment Analysis (GSEA) and Pathway Enrichment Analysis (PEA), which test for the association between a phenotype of interest and an entire set of Single Nucleotide Polymorphisms (SNPs) residing in selected genes. By assessing the correlation of disease and genetic variants in a group of functionally related genes, SNP-SNP interactions can be studied in terms of their contribution to more extreme phenotypes, including complex human diseases.
-In comparing GWASs that have been conducted in different populations, distinct sets of SNPs are revealed to be associated with the same disease. Thus, the functional annotation and mapping of SNP data can also be extended to identify geography-based genetic variability operating on entire biochemical pathways. In this case, identifying pathway components that differ in genotype frequency for distinct populations can provide important clues into the mechanisms of race-specific susceptibility to pathogens and prevalence of disease.
-This project seeks to investigate clusters of SNPs with highly differentiated allele frequencies between populations to infer race-specific biological signatures associated with CHD. We hope that this study increases our understanding of complex pathophysiological mechanisms by characterizing the functional overlap of SNPs associated with the same disease across populations. Furthermore, based on the literature about the functional mechanisms of prescription drugs, we hypothesize that population differences in CHD pathways can also predict treatment outcome and be a tool in personalized medicine.
+## Overview of the original experiment
 
+Large research efforts have been made to identify genomic regions, variants in candidate genes, and environmental factors that contribute to disease-associated health disparities across populations.  
+
+In a study by [Mao et al.](https://bmcgenomics.biomedcentral.com/articles/10.1186/s12864-017-4262-9#Equ1), worldwide differences in the effect allele frequency of 225 obesity-associated SNPs were investigated. The original analysis was conducted to identify significantly enriched or depleted effect alleles across 26 populations, which were later interrogated with respect to the relevance and underlying biological mechanisms of their associated genes. Additionally, researchers inspected the population-based patterns that emerged from differences in allele frequency and genetic risk scores. The results suggest that over 85% of effect alleles exhibit significant allele frequency differences and that population-level differences in genetic risk scores are correlated with obesity prevalence.  
+
+## Goals of the re-analysis
+
+In Genome-Wide Association Studies (GWAS), the over-representation of European populations is frequently coupled with inadequate sampling of African genomes in SNP arrays and imputation reference panels. As a result, ascertainment bias commonly confounds the associations between genetic ancestry and disease susceptibility.  
+
+The main goal of this re-analysis is to explore obesity-related variants among a subset of samples, namely those associated with the African American (ASW), African (YRI), and European American (CEU) populations. As such, this project will interrogate the relationship between disease susceptibility, ancestry, and admixture to elucidate the genetic underpinnings of health disparities across populations. Furthermore, this re-analysis will evaluate the transferability of GWA studies by considering the ancestral diversity within and between study cohorts.  
+
+Ultimately, this re-analysis will illustrate the spectrum of genetic diversity between geographically distant genomes to reveal ancestral biological signatures and systematic differences underlying the obesity epidemic. In doing so, we hope to encourage diversity and inclusion in genomics research, as well as urge for the investigation of genetic variants with extreme allele frequency differences (EAFD) between populations.  
 
 # Methods
 
-```{bash, eval=FALSE}
+For this project, we first obtained a list of obesity-associated SNPs and their effect allele frequencies from the supplementary material available in the original publication.  The authors compiled 225 SNPs from 29 GWA studies in the NHGRI-EBI GWAS Catalog, 19 of which were performed in European populations, 3 in East Asians, 2 in South Asians, 3 in Africans, and 2 in mixed ethnic populations. The corresponding effect allele frequencies were based on genotype information for 26 populations surveyed by the 1000 Genomes Project.
 
-#The GWAS Catalog is currently mapped to genome assembly GRCh38.p13 and dbSNP Build 153.
+```{bash, eval = TRUE}
+
+#
+wget https://static-content.springer.com/esm/art%3A10.1186%2Fs12864-017-4262-9/MediaObjects/12864_2017_4262_MOESM1_ESM.xlsx
+
+```
+
+The remaining steps implement a pipeline that uses the R programming language to automate key components of data processing, analysis, and visualisation. 
+
+## Overview of the pipeline stages
 
 
-#The International Genome Sample Resource (IGSR) reported approximately 73 million single nucleotide variants (SNVs) and 5 million short insertions/deletions (indels) collected by the 1000 Genomes Project. The sequencing data for its third phase is derived from 2,504 genomes belonging to 26 populations worldwide. In Ensembl, this variants are available in the current GRCh38 build and all alleles are reported on the forward strand (http://ftp.ensembl.org/pub/release-103/variation/gvf/homo_sapiens/).
+We then selected a subset of the original populations to compare the association signals of each variant between African American (ASW), African (YRI), and European American (CEU) populations. The re-analysis consisted of 3 main interrogations, namely investigating significant enrichment or depletion patterns, extreme allele frequency differences, and the biological mechanisms of relevant genes as they relate to admixture. 
 
-#head 1000GENOMES-phase_3.gvf.gz ##The first 33 lines are descriptive
-#zcat 1000GENOMES-phase_3.gvf.gz | awk 'NR>33' > 1000GENOMES_data.gvf
+
+```{r, eval = TRUE, tidy = TRUE, cache=FALSE, message=F, warning=F}
+
 
 
 ```
+
 
 ## Quality Control
 
-### Allele frequency analysis to identify strand flipping and data formatting issues
 
 ## Analysis
-
-
-```{bash, eval=FALSE}
-
-```
 
 
 ```{r}
