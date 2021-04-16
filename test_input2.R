@@ -14,6 +14,8 @@ setwd(dir)
 data <- read_excel("225SNPs26populations.xlsx")
 colnames(data) <- data[2, ] # the second row will be the header
 data <- data[-c(1,2), ]          # removing the first two rows
+SNP_15 <- c("rs6499640","rs11075990","rs9939609","rs7202116","rs7185735","rs9940128","rs1121980","rs17817449","rs8043757","rs8050136","rs1421085","rs1558902","rs12149832","rs62033400","rs17817964")
+data <- data[data$`SNP ID` %in% SNP_15,,drop = FALSE] #filtering by SNPs of interest
 #The first three columns are SNP information. After that, each of the 26 populations has 5 columns:
 #("population","effect allele number","other allele number","total allele number","effect allele frequency")
 #The remaining columns (138-[3+26*5=133]=5) summarize global population data ("population","effect allele number","other allele number","effect allele frequency","GWAS P-value")
@@ -82,7 +84,7 @@ rownames(hyper.df) <- SNP.df$`SNP ID`
 
 hyper_adj.df <- p.adjust(as.matrix(hyper.df))
 
-cutoff <- 0.01 / (2*3*225) #To control a family-wise error rate (FWER) of 0.01, we used a raw p-value of 7.41E-6 as cutoff. 
+cutoff <- 0.01 / (2*3*15) #To control a family-wise error rate (FWER) of 0.01, we used a raw p-value of 7.41E-6 as cutoff. 
 pvalFiltered.df <- subset(hyper.df < cutoff)
 
 enriched <- data.frame(hyper.df < cutoff)
@@ -134,7 +136,7 @@ for(df in L) {
 
 hyperRes_melted <- melt(hyperRes,id.vars=c(populations,"type","GWAS P-value"))
 
-cutoff <- 0.01 / (2*3*225) #To control a family-wise error rate (FWER) of 0.01, we used a raw p-value of 7.41E-6 as cutoff. 
+cutoff <- 0.01 / (2*3*15) #To control a family-wise error rate (FWER) of 0.01, we used a raw p-value of 7.41E-6 as cutoff. 
 enrichedFiltered.df  <- data.frame(enrichment.df < cutoff)
 depleatedFiltered.df <- data.frame(depletion.df < cutoff)
 
