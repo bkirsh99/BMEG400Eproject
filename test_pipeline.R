@@ -1,3 +1,8 @@
+rm(list = ls()) # clean up the environment
+
+################################################################################
+
+# Load dependencies
 library(dplyr)
 library(tidyr)
 library(readxl)
@@ -19,7 +24,15 @@ data <- data[-c(1,2), ] # and the first two rows can be removed
 # each of the 26 populations takes up 5 subsequent columns ("population", "effect allele number", "other allele number", "total allele number", and "effect allele frequency")
 # the final 5 columns (138-[3+26*5=133]=5) summarize global population data ("population", "effect allele number", "other allele number", "effect allele frequency", and "GWAS P-value")
 
+allPop <- c() # make a list of all 26 populations included in the study
+for(i in seq(from=4, to=ncol(data), by=5)){
+  population <- toString(data[1,i])
+  allPop <- append(allPop,population)
+}
+
 populations <- c("CEU","ASW","YRI") # determine what populations to investigate
+#populations <- allPop # or use all 26 populations to verify and compare with findings from the original study
+                      # this is for heatmap visualization purposes only, as Venn diagrams and allele frequency distribution plots become over-crowded with the 26 populations 
 cols <- c("population","effect allele number","other allele number","total allele number",
           "effect allele frequency") # determine relevant parameters to report in the data frames created from here on
 
@@ -150,7 +163,7 @@ enrVenn <- makeVenn(enrDf,populations,0.01)
 depVenn <- makeVenn(depDf,populations,0.01)
 
 makePlots <- function(df,pop,sig){
-  #dev.off()
+  dev.off()
   cutoff <- sig / (2*length(pop)*nrow(data))
   
   meltedDf <- melt(df,id.vars=c(pop,"type","GWAS P-value"))
@@ -163,6 +176,7 @@ makePlots <- function(df,pop,sig){
   # the actual value of log10 of the p-value (a negative number) is used to represent depleted effect allele of a SNP for a population in the heatmap
   
   heatmapMtx <- as.matrix(heatmapDf[ , -keep]) # create a matrix from the FWER filtered, combined, log-transformed, and additive inverse-corrected p-values
+  heatmapMtx[!is.finite(heatmapMtx)] <- 0
   col_fun = colorRampPalette(c("green", "black", "red"))(1024)
   clusterHm <- heatmap3(heatmapMtx, Colv = NA, Rowv = NA, hclustfun = function(x) hclust(x,method = 'centroid'), col = col_fun, scale = "row")
   
@@ -179,3 +193,5 @@ makePlots <- function(df,pop,sig){
 }
 
 plotRes <- makePlots(hyperRes,populations,0.01)
+hm <- plotRes[[1]]
+fd <- plotRes[[2]]
