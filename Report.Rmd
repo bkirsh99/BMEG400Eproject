@@ -66,6 +66,7 @@ library(tidyr)
 library(ggvenn)
 library(RColorBrewer)
 library(heatmap3)
+library(data.table) 
 ```
 
 ## Overview of the pipeline stages
@@ -248,7 +249,7 @@ getSig <- function(df,list,sig){
 # function: "makeHeatmap": a function to create a heat map that illustrates the enrichment/depletion of significant SNPs across the populations under investigation
 # argument(s): "df": a data frame with the log10 transformed p-values of significantly enriched and depleted effect alleles
 # return value(s): NA (saves the heat map as a .jpeg file to the current directory)
-makeHeatmap <- function(df){
+makeHeatmap <- function(df,groupColours){
   heatmapDf <- df
   heatmapDf[heatmapDf$type == "enr",] <- heatmapDf[heatmapDf$type == "enr",] %>% mutate_at(1:(ncol(heatmapDf)-2), ~ . * -1)
   # the negative of log10 of the p-value (a positive number) is used to represent enriched effect allele of a SNP for a population in the heatmap
@@ -262,8 +263,12 @@ makeHeatmap <- function(df){
   hc <- hclust(as.dist(1-cor(y, method = "spearman")), method = "centroid")
   col_fun = colorRampPalette(c("green", "black", "red"))(1024)
   jpeg(file="heatmap.jpg")
-  heatmap3(y, Rowv = as.dendrogram(hr), Colv = as.dendrogram(hc), col=col_fun,scale="row",margins=c(3,7),cexRow=0.8,cexCol=1,file="heatmap.pdf")
-  dev.off()
+  if(missing(groupColours)){
+    heatmap3(y, Rowv = as.dendrogram(hr), Colv = as.dendrogram(hc), col=col_fun,scale="row",margins=c(3,7),cexRow=0.8,cexCol=1,file="heatmap.pdf")
+  } else {
+    heatmap3(y, Rowv = as.dendrogram(hr), Colv = as.dendrogram(hc), ColSideColors=groupColours,col=col_fun,scale="row",margins=c(3,7),cexRow=0.8,cexCol=1,file="heatmap.pdf")
+  }
+    dev.off()
 }
   
 # function: "plotDist": a function to plot the distribution of effect allele frequencies for select SNPs
@@ -399,9 +404,20 @@ sigRes <- getSig(hyperComb,myPop,0.01)
 
 ```{r, eval=TRUE,tidy = TRUE, cache=FALSE, fig.cap="A heat map of significantly enriched and depleted effect alleles across all 26 populations", out.width = '100%', message=F, warning=F}
 
-makeHeatmap(sigRes)
-knitr::include_graphics("heatmap.jpg")
+sigRes
+annotation <- as.data.frame(fread("pop.txt",select=c(1,3)))
 
+mapContinentToColor<-function(annotations){
+    colorsVector <- ifelse(annotations["Super Population Code"]=="AFR", 
+        "blue", ifelse(annotations["Super Population Code"]=="EUR", 
+        "grey", ifelse(annotations["Super Population Code"]=="SAS",
+        "red", ifelse(annotations["Super Population Code"]=="EAS",
+         "yellow","green"))))
+    return(colorsVector)
+}
+continentColors <- mapContinentToColor(annotation)
+makeHeatmap(sigRes,continentColors)
+knitr::include_graphics("heatmap.jpg")
 ```
 
 The original heat map showing significant enrichment and depletion of the effect alleles of 225 obesity risk SNPs across the 26 populations is shown below for comparison.
