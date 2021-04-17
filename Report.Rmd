@@ -404,4 +404,16 @@ knitr::include_graphics("heatmap.jpg")
 
 ```
 
+The original heat map showing significant enrichment and depletion of the effect alleles of 225 obesity risk SNPs across the 26 populations is shown below for comparison.
+
+[Heatmap of significantly enriched or depleted alleles from the original publication.](change-to-url!!!!)
+
 # Conclusions
+
+In general, the results of this re-analysis are consistent with the literature. The additional study that investigated asthma-related variants in precisely the same three populations, ASW, CEU, and YRI, came to strikingly similar conclusions.
+
+The differences between this project and the original publication, mainly the large discrepancy between the proportion of SNPs that possess effect alleles significantly enriched or depleted in at least one of the populations (i.e., 86.7% vs. 35.55%), is most likely due to the gross reduction in sample size from 26 down to 3. This impacted the hypergeometric tests and, thus, all analysis downstream of it.
+
+When we leveled-off the comparison of this re-analysis to the original study by considering all 26 populations, as above, much more similar results were obtained.
+
+Thus, we conclude that ancestral genetics do play a role in the disease susceptibility, to some extent. It is important to caveat that obesity and obesity-related traits are the product of combined effects of multiple different genetic variants and their interaction with surrounding environmental variables, so environmental factors such as diet, climate, local pathogens and lifestyle are other large contributors .
