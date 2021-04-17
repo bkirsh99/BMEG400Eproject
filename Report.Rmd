@@ -2,6 +2,10 @@
 output: 
   pdf_document:
     fig_caption: true
+header-includes:
+  \usepackage{wrapfig}
+  \usepackage{float}
+  \floatplacement{figure}{H}
 title: "Project Report: A Reproduction Analysis of Allele Frequency Differences Between Populations"
 thanks: "The original study, **Population differentiation in allele frequencies of obesity-associated SNPs**, is available in BMC Genomics."
 author: Bianca Kirsh and Josh de Freitas
@@ -22,6 +26,7 @@ knitr::opts_chunk$set(cache=TRUE,
                       warning=FALSE,
                       tidy.opts=list(width.cutoff=60),
                       tidy=TRUE,
+                      fig.pos = "H",
                       fig.path='figs/',
                       cache.path = '_cache/',
                       fig.process = function(x) {
@@ -34,17 +39,17 @@ knitr::opts_chunk$set(cache=TRUE,
 
 ## Overview of the original experiment
 
-Large research efforts have been made to identify genomic regions, variants in candidate genes, and environmental factors that contribute to disease-associated health disparities across populations.  
+Large research efforts have been made to identify genomic regions, variants in candidate genes, and environmental factors that contribute to disease-associated health disparities across populations.
 
-In a study by [Mao et al.](https://bmcgenomics.biomedcentral.com/articles/10.1186/s12864-017-4262-9#Equ1), worldwide differences in the effect allele frequency of 225 obesity-associated SNPs were investigated. The original analysis was conducted to identify significantly enriched or depleted effect alleles across 26 populations, which were later interrogated with respect to the relevance and underlying biological mechanisms of their associated genes. Additionally, researchers inspected the population-based patterns that emerged from differences in allele frequency and genetic risk scores. The results suggest that over 85% of effect alleles exhibit significant allele frequency differences and that population-level differences in genetic risk scores are correlated with obesity prevalence.  
+In a study by [Mao et al.](https://bmcgenomics.biomedcentral.com/articles/10.1186/s12864-017-4262-9#Equ1), worldwide differences in the effect allele frequency of 225 obesity-associated SNPs were investigated. The original analysis was conducted to identify significantly enriched or depleted effect alleles across 26 populations, which were later interrogated with respect to the relevance and underlying biological mechanisms of their associated genes. Additionally, researchers inspected the population-based patterns that emerged from differences in allele frequency and genetic risk scores. The results suggest that over 85% of effect alleles exhibit significant allele frequency differences and that population-level differences in genetic risk scores are correlated with obesity prevalence.
 
 ## Goals of the re-analysis
 
-In Genome-Wide Association Studies (GWAS), the over-representation of European populations is frequently coupled with inadequate sampling of African genomes in SNP arrays and imputation reference panels. As a result, ascertainment bias commonly confounds the associations between genetic ancestry and disease susceptibility.  
+In Genome-Wide Association Studies (GWAS), the over-representation of European populations is frequently coupled with inadequate sampling of African genomes in SNP arrays and imputation reference panels. As a result, ascertainment bias commonly confounds the associations between genetic ancestry and disease susceptibility.
 
-The main goal of this re-analysis is to explore obesity-related variants among a subset of samples, namely those associated with the African American (ASW), African (YRI), and European American (CEU) populations. As such, this project will interrogate the relationship between disease susceptibility, ancestry, and admixture to elucidate the genetic underpinnings of health disparities across populations. Furthermore, this re-analysis will evaluate the transferability of GWA studies by considering the ancestral diversity within and between study cohorts.  
+The main goal of this re-analysis is to explore obesity-related variants among a subset of samples, namely those associated with the African American (ASW), African (YRI), and European American (CEU) populations. As such, this project will interrogate the relationship between disease susceptibility, ancestry, and admixture to elucidate the genetic underpinnings of health disparities across populations. Furthermore, this re-analysis will evaluate the transferability of GWA studies by considering the ancestral diversity within and between study cohorts.
 
-Ultimately, this re-analysis will illustrate the spectrum of genetic diversity between geographically distant genomes to reveal ancestral biological signatures and systematic differences underlying the obesity epidemic. In doing so, we hope to encourage diversity and inclusion in genomics research, as well as urge for the investigation of genetic variants with extreme allele frequency differences (EAFD) between populations.  
+Ultimately, this re-analysis will illustrate the spectrum of genetic diversity between geographically distant genomes to reveal ancestral biological signatures and systematic differences underlying the obesity epidemic. In doing so, we hope to encourage diversity and inclusion in genomics research, as well as urge for the investigation of genetic variants with extreme allele frequency differences (EAFD) between populations.
 
 # Methods
 
@@ -67,7 +72,7 @@ library(heatmap3)
 
 ### Data download
 
-For the first stage of the pipeline, we obtained a list of obesity-associated SNPs and their effect allele frequencies from the supplementary material available in the original publication.  The authors compiled 225 SNPs from 29 GWA studies in the NHGRI-EBI GWAS Catalog, 19 of which were performed in European populations, 3 in East Asians, 2 in South Asians, 3 in Africans, and 2 in mixed ethnic populations. The corresponding effect allele frequencies were based on genotype information for 26 populations surveyed by the 1000 Genomes Project.  
+For the first stage of the pipeline, we obtained a list of obesity-associated SNPs and their effect allele frequencies from the supplementary material available in the original publication. The authors compiled 225 SNPs from 29 GWA studies in the NHGRI-EBI GWAS Catalog, 19 of which were performed in European populations, 3 in East Asians, 2 in South Asians, 3 in Africans, and 2 in mixed ethnic populations. The corresponding effect allele frequencies were based on genotype information for 26 populations surveyed by the 1000 Genomes Project.
 
 ```{bash, eval = TRUE, engine.opts='-l'}
 
@@ -75,13 +80,13 @@ wget -q https://static-content.springer.com/esm/art%3A10.1186%2Fs12864-017-4262-
 
 ```
 
-In doing so, we overcame computationally-intensive and resource-demanding challenges associated with retrieving data from the 1000 Genomes Project. At the same time, we ensured that this re-analysis was conducted on the raw data set used by the original publication prior to any filtering or manipulation steps.     
+By utilizing pre-compiled, but not pre-processed data, we overcame computationally-intensive and resource-demanding challenges associated with retrieving data from the 1000 Genomes Project. At the same time, we ensured that this re-analysis was conducted on the raw data set used by the original publication prior to major filtering or manipulation steps.
 
 ### Data pre-processing
 
-The next stage involved selecting a subset of the data from the original publication. To compare the association signals of each variant as they relate to admixture, we chose to investigate the American (ASW), African (YRI), and European American (CEU) populations.  
+The next stage involved selecting a subset of the data from the original publication. To compare the association signals of each variant as they relate to admixture, we chose to investigate the American (ASW), African (YRI), and European American (CEU) populations.
 
-A helper function was created to assist in generating and populating data frames with the raw downloaded data, as outlined below.  
+A helper function was created to assist in generating and populating data frames with the raw downloaded data, as outlined below.
 
 ```{r, eval = TRUE}
 # function: "populateDfs": a function to populate data frames with user-specified population data from the original study
@@ -126,17 +131,17 @@ The bulk of this re-analysis consisted of two main interrogations, namely the in
 
 For the first portion, we conducted hypergeometric tests to assess if the effect allele of each SNP was enriched or depleted in the 3 populations as compared to the overall population average. The results of these tests were the foundation for many subsequent steps, including the production of Venn diagrams, heat maps, and tabulated data. For the second portion, we utilized the allele frequency data from the original publication to plot the distribution of effect allele frequency across the three populations.
 
-#### Quality control and filtering
+### *Quality control and filtering*
 
-As mentioned previously, the inputs of this re-analysis are essentially raw. Thus, we applied a series of processing steps for both statistical and visualization purposes.  
+As mentioned previously, the inputs of this re-analysis are essentially raw. Thus, we applied a series of processing steps for both statistical and visualization purposes.
 
-The first filtering step consisted of selecting a subset of the 3 populations out of the original 26, as described in the section above. As a caveat, the original publication included a 27th "population"," which pulls all 26 populations together and is referred to as the **global population** for hypothesis testing purposes. Thus, a "4th" population was similarly created for this smaller data set consisting of the ASW, YRI, and CEU groups.  
+The first filtering step consisted of selecting a subset of the 3 populations out of the original 26, as described in the section above. As a caveat, the original publication included a 27th "population"," which pulls all 26 populations together and is referred to as the **global population** for hypothesis testing purposes. Thus, a "4th" population was similarly created for this smaller data set consisting of the ASW, YRI, and CEU groups.
 
-Then, we conducted two separate hypergeometric tests for each of the 225 SNPs, one for enrichment and one for depletion. This yielded 6 (2 x 3) tests per SNP, for a total of 1350 (6 x 225) tests across all 225 SNPs and 3 populations. With an overall significance level of 0.01, we applied Bonferroni correction to control the family-wise error rate (FWER) at a raw p-value cutoff of 7.4E-06 (0.01/1350). This first data set was used to produce the Venn diagrams and heat maps pertaining to the enrichment analysis.   
+Then, we conducted two separate hypergeometric tests for each of the 225 SNPs, one for enrichment and one for depletion. This yielded 6 (2 x 3) tests per SNP, for a total of 1350 (6 x 225) tests across all 225 SNPs and 3 populations. With an overall significance level of 0.01, we applied Bonferroni correction to control the family-wise error rate (FWER) at a raw p-value cutoff of 7.4E-06 (0.01/1350). This first data set was used to produce the Venn diagrams and heat maps pertaining to the enrichment analysis.
 
-For further inspection of a smaller subset of SNPs from the original 225 obesity-related variants, we selected those with enrichment or depletion log10 transformed p-values of at least 10E-100 and genome-wide significance (5 × 10E-08) in GWA studies. This second data set was used to produce the risk (effect) allele frequency distribution plots.  
+For further inspection of a smaller subset of SNPs from the original 225 obesity-related variants, we selected those with enrichment or depletion log10 transformed p-values of at least 10E-100 and genome-wide significance (5 × 10E-08) in GWA studies. This second data set was used to produce the risk (effect) allele frequency distribution plots.
 
-Once again, a set of helper functions were created to aid in data wrangling and hypothesis testing.  
+Once again, a set of helper functions were created to aid in data wrangling and hypothesis testing.
 
 ```{r, eval=TRUE}
 # function: "hyperTest": a function to perform the enrichment analysis using Fisher’s two-tail exact test (two hypergeometric tests, one for enrichment and another for depletion, are conducted per SNP)
@@ -207,10 +212,9 @@ combineHyper <- function(dfs,rows){
 
 ### Data visualization
 
-In this re-analysis, many hypothesis can be made based on the graphical depiction of data. Thus, we created different plots to assist in drawing conclusions about ancestry and admixture as they relate to obesity prevalence. The helper functions are described below.  
+In this re-analysis, many hypothesis can be made based on the graphical depiction of data. Thus, we created different plots to assist in drawing conclusions about ancestry and admixture as they relate to obesity prevalence. The helper functions are described below.
 
-For clustering, we used the centroid option as the linkage method and correlation-based distance to compute the dissimilarity matrix. These choices are common in gene expression analysis, where clusters of observations are formed based on overall profiles rather than magnitudes (e.g., similar genes are “up” and “down” together, regardless of their absolute expression value). The choice of Sperman's correlation instead of Pearson’s correlation was done to mitigate the possible impact of outliers.
-
+For clustering, we used the centroid option as the linkage method and correlation-based distance to compute the dissimilarity matrix. These choices are common in gene expression analysis, where clusters of observations are formed based on overall profiles rather than magnitudes (e.g., similar genes are "up" and "down" together, regardless of their absolute expression value). The choice of Sperman's correlation instead of Pearson's correlation was done to mitigate the possible impact of outliers.
 
 ```{r,eval=TRUE}
 # function: "makeVenn": a function to create a Venn diagram that illustrates the differences and similarities between the populations under investigation
@@ -258,7 +262,7 @@ makeHeatmap <- function(df){
   hc <- hclust(as.dist(1-cor(y, method = "spearman")), method = "centroid")
   col_fun = colorRampPalette(c("green", "black", "red"))(1024)
   jpeg(file="heatmap.jpg")
-  heatmap3(y, Rowv = as.dendrogram(hr), Colv = as.dendrogram(hc), col=col_fun,scale="row",file="heatmap.pdf")
+  heatmap3(y, Rowv = as.dendrogram(hr), Colv = as.dendrogram(hc), col=col_fun,scale="row",margins=c(3,7),cexRow=0.8,cexCol=1,file="heatmap.pdf")
   dev.off()
 }
   
@@ -274,13 +278,18 @@ plotDist <- function(df,frequency){
   frequency["id"] <- rownames(frequency)
   meltedPopDf <- melt(frequency, id.vars="id", value.name="MAF", variable.name="Population")
   filteredPopDf <- meltedPopDf[meltedPopDf$id %in% filteredSNP ,]
-  plot <- ggplot(filteredPopDf,aes(x=id,y=MAF,fill=Population)) + geom_dotplot(binaxis='y', stackdir='center')
+  plot <- ggplot(filteredPopDf,aes(x=id,y=as.numeric(MAF),fill=Population)) + geom_dotplot(binaxis='y', stackdir='center')
+  plot <- plot + ggtitle("Plot of effect allele frequency distribution") +
+  xlab("SNP ID") + ylab("Effect Allele Frequency")
+  plot <- plot + theme(axis.text.x=element_text(angle=90, hjust=1))
   return(plot)
 }
 
 ```
 
 ## Results
+
+We ran the pipeline for the three pre-selected populations, CEU, ASW, and YRI, as illustrated below.
 
 ```{r, eval=TRUE, message=FALSE}
 
@@ -310,19 +319,29 @@ sigRes <- getSig(hyperComb,myPop,0.01)
 
 ```
 
-````{r, eval=TRUE, tidy = TRUE, cache=FALSE, fig.cap="A Venn diagram of significantly enriched effect alleles", message=F, warning=F}
+### Patternicity of enrichment and depletion analysis
+
+The first data interpretation step was based on the results of hypergeometric testing. At the FWER-adjusted p-value of 0.01, the enrichment analysis revealed significant results for the effect alleles of 80 SNPs out of the original 225 SNPs (35.55%). More specifically, 77 SNPs were significantly enriched in at least one population and 3 SNPs were significantly enriched in at least two populations (Figure 1). Similarly, 75 SNPs were significantly depleted in at least one population and 5 SNPs were significantly enriched in at least two populations (Figure 2). In comparison with the original analysis, where 195 out of 225 SNPs (86.7%) were significantly enriched or depleted in at least one of the 26 populations, we obtained far less significant results.
+
+We produced a set of Venn diagrams to illustrate the differences and commonalities in enriched or depleted SNPs across the three populations. In general, the CEU population presented the greatest number of significantly enriched or depleted alleles, 76 and 71, respectively. On the other hand, the ASW yielded the least amount of significant results, with only 3 alleles in each category. The code blocks below indicate how the diagrams were generated.
+
+```{r, eval=TRUE, tidy = TRUE, cache=FALSE, fig.cap="A Venn diagram of significantly enriched effect alleles", message=F, warning=F}
 enrVenn <- makeVenn(enrDf,myPop,0.01)
 enrVenn
 
 ```
 
-````{r, eval=TRUE, tidy = TRUE, cache=FALSE, fig.cap="A Venn diagram of significantly depleted effect alleles", message=F, warning=F}
+```{r, eval=TRUE, tidy = TRUE, cache=FALSE, fig.cap="A Venn diagram of significantly depleted effect alleles", message=F, warning=F}
 depVenn <- makeVenn(depDf,myPop,0.01)
 depVenn
 
 ```
 
-``````{r pressure, echo=FALSE, fig.cap="A heat map of sginificantly enriched and depleted effect alleles", out.width = '100%'}
+The results from hypergeometric testing were also utilized to generate a heat map and visualize allele enrichment and depletion patterns among the three populations (Figure 3). If an effect allele was enriched, the cell was colored red based on the negative value of log10P, whereas if an effect allele was depleted, it was colored green based on the actual value of log10P. A hierarchical clustering of the three populations shows that the YRI and ASW populations share similar allele enrichment and depletion patterns. Furthermore, many cases of simultaneous significant enrichment in one population and depletion in another are observed in the CEU and YRI populations. In other words, they exhibit multiple SNPs with opposite directions in allele frequency changes, where effect alleles that are enriched in one population appear depleted in the other. In these scenarios, the ASW population has a tendency to bias the enrichment or depletion status of effect alleles in the CEU population.
+
+As hypothesized by the original publication, where ASW and YRI are tightly clustered together and distant from the CEU cluster, we believe that genetic factors related to the ancestry of continental populations influences obesity-related SNP enrichment and depletion patters. The code block below indicates how the heat map was generated.
+
+```{r, eval=TRUE,tidy = TRUE, cache=FALSE, fig.cap="A heat map of significantly enriched and depleted effect alleles", out.width = '100%', message=F, warning=F}
 
 makeHeatmap(sigRes)
 knitr::include_graphics("heatmap.jpg")
@@ -330,13 +349,21 @@ knitr::include_graphics("heatmap.jpg")
 
 ```
 
+### Distribution of risk allele frequencies
 
-````{r, eval=TRUE, tidy = TRUE, cache=FALSE, fig.cap="A plot of the distribution of effect allele frequencies for the most significant SNPs", message=F, warning=F}
+To second investigation consisted of analyzing the differences in effect allele frequency by plotting their distributions across the three populations (Figure 4). Only a small subset of SNPs was considered at this stage, as determined by their significance in both the enrichment analysis and GWAS studies. The code block below indicates how the distribution plot was generated.
+
+In a study by [Mersha et al.](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4307746/), the ASW population showcased allele frequencies intermediate to the ancestral CEU and YRI populations for asthma-related GWAS SNPs. The same statement applies to our subset of 8 obesity-related SNPs. Furthermore, we observed a bias towards YRI allele frequencies in the admixed ASW population. It is important to notice the difference between our re-analysis and this study, both in terms of the studied disease (i.e., asthma vs. obesity) and number of plotted variants (i.e., 78 vs. 8), which makes the similarity in results especially convincing.
+
+```{r, eval=TRUE, tidy = TRUE, cache=FALSE, fig.cap="A frequency distribution plot of effect alleles for the most significant SNPs", message=F, warning=F}
 distPlot <- plotDist(sigRes,freqInfo)
+distPlot
 
 ```
 
-For better validation of the reproducibility of this re-analysis, we also generated a heat map of the enrichment/depletion p-values (log10 based) of effect alleles in all 26 populations. The use of a pipeline for most aspects of the project greatly facilitated this step, as the only parameter to be modified was the populations under investigation.  
+The minor allele frequency (MAF) distribution of asthma-related GWAS SNP's across ASW, CEU, and YRI populations is shown below for comparison.
+
+Lastly, for better validation of the reproducibility of this re-analysis, we also generated a heat map of the enrichment/depletion p-values (log10 based) of effect alleles in all 26 populations. The use of a pipeline for most aspects of the project greatly facilitated this step, as the only parameter to be modified was the populations under investigation.
 
 ```{r, eval = FALSE}
 
@@ -356,6 +383,5 @@ getPops <- function(input){
 allPop <- getPops(data) # make a list of all 26 populations included in the study
 
 ```
-
 
 # Conclusions
