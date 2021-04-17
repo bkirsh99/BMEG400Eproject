@@ -341,11 +341,10 @@ The results from hypergeometric testing were also utilized to generate a heat ma
 
 As hypothesized by the original publication, where ASW and YRI are tightly clustered together and distant from the CEU cluster, we believe that genetic factors related to the ancestry of continental populations influences obesity-related SNP enrichment and depletion patters. The code block below indicates how the heat map was generated.
 
-```{r, eval=TRUE,tidy = TRUE, cache=FALSE, fig.cap="A heat map of significantly enriched and depleted effect alleles", out.width = '100%', message=F, warning=F}
+```{r, eval=TRUE,tidy = TRUE, cache=FALSE, fig.cap="A heat map of significantly enriched and depleted effect alleles across the 3 populations", out.width = '100%', message=F, warning=F}
 
 makeHeatmap(sigRes)
 knitr::include_graphics("heatmap.jpg")
-
 
 ```
 
@@ -363,24 +362,45 @@ distPlot
 
 The minor allele frequency (MAF) distribution of asthma-related GWAS SNP's across ASW, CEU, and YRI populations is shown below for comparison.
 
+[Minor allele frequency distribution of asthma-associated SNPs for ASW, CEU, and YRI.](change-this!!!!!!!!!!!image_url)
+
 Lastly, for better validation of the reproducibility of this re-analysis, we also generated a heat map of the enrichment/depletion p-values (log10 based) of effect alleles in all 26 populations. The use of a pipeline for most aspects of the project greatly facilitated this step, as the only parameter to be modified was the populations under investigation.
 
-```{r, eval = FALSE}
+```{r, eval = TRUE}
 
-# function: "getPops": a function to retrieve the names of all surveyed populations (26)
+# function: "allPops": a function to retrieve the names of all surveyed populations (26)
 # argument(s): "input": the table from the original publication
 # return value(s): "list": a vector of population codes reported in the study, as per 1000 Genomes convention
 
-getPops <- function(input){
+allPops <- function(input){
   list <- c()
-  for(i in seq(from=4, to=ncol(input), by=5)){
+  for(i in seq(from=4, to=ncol(input)-5, by=5)){
     population <- toString(input[1,i])
     list <- append(list,population)
   }
   return(list)
 }
 
-allPop <- getPops(data) # make a list of all 26 populations included in the study
+myPop <- allPops(data) # make a list of all 26 populations included in the study
+# now, re-run the pipeline up to the heat map generation step:
+
+otherInfo <- populateDfs(data,myPop,rowData,colData)
+freqInfo <- otherInfo[[1]] # gather effect allele frequency data for the select populations
+bckgdInfo <- otherInfo[[2]] # gather general SNP data for the global average of select populations
+
+hyperRes <- hyperTest(myPop,bckgdInfo)
+enrDf <- hyperRes[[1]] # gather enrichment analysis results for the 225 SNPs and 3 populations
+depDf <- hyperRes[[2]] # gather depletion analysis results for the 225 SNPs and 3 populations
+
+renameColsRows(c("enrDf","depDf"),rowData,myPop)
+hyperComb <- combineHyper(c("enrDf","depDf"),rowData)
+sigRes <- getSig(hyperComb,myPop,0.01)
+```
+
+```{r, eval=TRUE,tidy = TRUE, cache=FALSE, fig.cap="A heat map of significantly enriched and depleted effect alleles across all 26 populations", out.width = '100%', message=F, warning=F}
+
+makeHeatmap(sigRes)
+knitr::include_graphics("heatmap.jpg")
 
 ```
 
