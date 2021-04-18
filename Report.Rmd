@@ -105,7 +105,7 @@ populateDfs <- function(input,list,rows,cols){
   
   colnames(backgroundInfo) <- cols
   backgroundInfo$population <- "ALL"
-  backgroundInfo$`GWAS P-value` <- data$`GWAS P-value`
+  backgroundInfo$`GWAS P-value` <- input$`GWAS P-value`
   backgroundInfo[is.na(backgroundInfo)] <- 0
 
   for(i in seq(from=4, to=ncol(input), by=5)){
@@ -215,7 +215,9 @@ combineHyper <- function(dfs,rows){
 
 In this re-analysis, many hypothesis can be made based on the graphical depiction of data. Thus, we created different plots to assist in drawing conclusions about ancestry and admixture as they relate to obesity prevalence. The helper functions are described below.
 
-For clustering, we used the centroid option as the linkage method and correlation-based distance to compute the dissimilarity matrix. These choices are common in gene expression analysis, where clusters of observations are formed based on overall profiles rather than magnitudes (e.g., similar genes are "up" and "down" together, regardless of their absolute expression value). The choice of Sperman's correlation instead of Pearson's correlation was done to mitigate the possible impact of outliers.
+For clustering, we used the centroid option as the linkage method and correlation-based distance to compute the dissimilarity matrix. These choices are common in gene expression analysis, where clusters of observations are formed based on overall profiles rather than magnitudes (e.g., similar genes are "up" and "down" together, regardless of their absolute expression value). Furthermore, they were made to reproduce the clustering algorithm employed by the tool used in the original study, [dChip](https://sites.google.com/site/dchipsoft/home).
+
+It defines the distance between two genes is as *1-r*, where *r* is the Pearson correlation coefficient between the standardized expression values (make mean 0 and standard deviation 1) of the two genes across the samples used.
 
 ```{r,eval=TRUE}
 # function: "makeVenn": a function to create a Venn diagram that illustrates the differences and similarities between the populations under investigation
@@ -239,17 +241,18 @@ makeVenn <- function(df,list,sig){
 # return value(s): "logDf": a data frame with the log10 transformed p-values of significantly enriched and depleted effect alleles
 getSig <- function(df,list,sig){
   cutoff <- sig / (2*length(list)*nrow(df))
-  
-  meltedDf <- melt(df,id.vars=c(list,"type","GWAS P-value"))
-  sigDf <- meltedDf[!rowSums(meltedDf[,1:(ncol(meltedDf)-2)] < cutoff)==0,,drop=FALSE] # remove rows whose raw p-value is not significant at alpha 
+
+  sigDf <- df[!rowSums(df[,1:(ncol(df)-2)] < cutoff)==0,,drop=FALSE] # remove rows whose raw p-value is not significant at alpha 
   logDf <- sigDf %>% mutate_at(1:(ncol(sigDf)-2), log10) # log10 transform p-values
   return(logDf)
 }
 
 # function: "makeHeatmap": a function to create a heat map that illustrates the enrichment/depletion of significant SNPs across the populations under investigation
 # argument(s): "df": a data frame with the log10 transformed p-values of significantly enriched and depleted effect alleles
+#              "groupColours": a vector that annotatess the column values with colours
+#              "fname": output file name for heat map
 # return value(s): NA (saves the heat map as a .jpeg file to the current directory)
-makeHeatmap <- function(df,groupColours){
+makeHeatmap <- function(df,fname,groupColours){
   heatmapDf <- df
   heatmapDf[heatmapDf$type == "enr",] <- heatmapDf[heatmapDf$type == "enr",] %>% mutate_at(1:(ncol(heatmapDf)-2), ~ . * -1)
   # the negative of log10 of the p-value (a positive number) is used to represent enriched effect allele of a SNP for a population in the heatmap
@@ -259,14 +262,14 @@ makeHeatmap <- function(df,groupColours){
   heatmapMtx[!is.finite(heatmapMtx)] <- 0
   rm <- apply(heatmapMtx, 1, var) == 0
   y <- heatmapMtx[!rm,]
-  hr <- hclust(as.dist(1-cor(t(y), method = "spearman")), method = "centroid")
-  hc <- hclust(as.dist(1-cor(y, method = "spearman")), method = "centroid")
+  hr <- hclust(as.dist(1-cor(t(y), method = "pearson")), method = "centroid")
+  hc <- hclust(as.dist(1-cor(y, method = "pearson")), method = "centroid")
   col_fun = colorRampPalette(c("green", "black", "red"))(1024)
-  jpeg(file="heatmap.jpg")
+  jpeg(file=fname)
   if(missing(groupColours)){
     heatmap3(y, Rowv = as.dendrogram(hr), Colv = as.dendrogram(hc), col=col_fun,scale="row",margins=c(3,7),cexRow=0.8,cexCol=1,file="heatmap.pdf")
   } else {
-    heatmap3(y, Rowv = as.dendrogram(hr), Colv = as.dendrogram(hc), ColSideColors=groupColours,legendfun=function()showLegend(legend=c("AFR","EUR","SAS","EAS","AMR"),col=c("blue","grey","red","yellow","green")),col=col_fun,scale="row",margins=c(3,7),cexRow=0.8,cexCol=1,file="heatmap.pdf")
+    heatmap3(y, Rowv = as.dendrogram(hr), Colv = as.dendrogram(hc), ColSideColors=groupColours,legendfun=function()showLegend(legend=c("AFR","EUR","SAS","EAS","AMR"),col=c("blue","grey","red","yellow","green")),col=col_fun,scale="row",margins=c(3,7),cexRow=0.8,cexCol=1,file=fname)
   }
     dev.off()
 }
@@ -298,30 +301,42 @@ We ran the pipeline for the three pre-selected populations, CEU, ASW, and YRI, a
 
 ```{r, eval=TRUE, message=FALSE}
 
+# function: "runPipeline": a function to run the entire pipeline for the oriinal study data and user-defined populations
+# argument(s): "input": a data frame containing data from the original publication
+#              "list": a vector of population codes to be investigated in the re-analysis, as per 1000 Genomes convention
+#             "sig": the significance level (alpha)
+# return value(s): "results": a data frame holding the combined results of the enrichment/depletion analysis
+runPipeline <- function(input,list,sig){
+  varInfo <- input[,1:3] # gather general SNP data (SNP ID, effect allele, other allele)
+
+  rowData <<- input$`SNP ID`
+  colData <<- c("population","effect allele number","other allele number",
+             "total allele number","effect allele frequency")
+
+  otherInfo <- populateDfs(input,list,rowData,colData)
+  freqInfo <<- otherInfo[[1]] # gather effect allele frequency data for the select populations
+  bckgdInfo <<- otherInfo[[2]] # gather general SNP data for the global average of select populations
+
+  hyperRes <<- hyperTest(list,bckgdInfo)
+  enrDf <<- hyperRes[[1]] # gather enrichment analysis results for the 225 SNPs and select populations
+  depDf <<- hyperRes[[2]] # gather depletion analysis results for the 225 SNPs and select populations
+
+  renameColsRows(c("enrDf","depDf"),rowData,list)
+  hyperComb <<- combineHyper(c("enrDf","depDf"),rowData)
+  results <- getSig(hyperComb,list,sig)
+  return(results)
+}
+
+```
+
+```{r,eval=TRUE,message=FALSE}
 data <- read_excel("12864_2017_4262_MOESM1_ESM.xlsx") # read the data from the original publication
 colnames(data) <- data[2, ] # the second row is now the header
 data <- data[-c(1,2), ] # and the first two rows can be removed
 
-varInfo <- data[,1:3] # gather general SNP data (SNP ID, effect allele, other allele)
-
-rowData <- data$`SNP ID`
-colData <- c("population","effect allele number","other allele number",
-             "total allele number","effect allele frequency")
-
 myPop <- c("CEU","ASW","YRI") # make a list of the populations under investigation
 
-otherInfo <- populateDfs(data,myPop,rowData,colData)
-freqInfo <- otherInfo[[1]] # gather effect allele frequency data for the select populations
-bckgdInfo <- otherInfo[[2]] # gather general SNP data for the global average of select populations
-
-hyperRes <- hyperTest(myPop,bckgdInfo)
-enrDf <- hyperRes[[1]] # gather enrichment analysis results for the 225 SNPs and 3 populations
-depDf <- hyperRes[[2]] # gather depletion analysis results for the 225 SNPs and 3 populations
-
-renameColsRows(c("enrDf","depDf"),rowData,myPop)
-hyperComb <- combineHyper(c("enrDf","depDf"),rowData)
-sigRes <- getSig(hyperComb,myPop,0.01)
-
+sigRes <- runPipeline(data,myPop,0.01)
 ```
 
 ### Patternicity of enrichment and depletion analysis
@@ -348,8 +363,8 @@ As hypothesized by the original publication, where ASW and YRI are tightly clust
 
 ```{r, eval=TRUE,tidy = TRUE, cache=FALSE, fig.cap="A heat map of significantly enriched and depleted effect alleles across the 3 populations", out.width = '100%', message=F, warning=F}
 
-makeHeatmap(sigRes)
-knitr::include_graphics("heatmap.jpg")
+makeHeatmap(sigRes,"heatmap1.jpg")
+knitr::include_graphics("heatmap1.jpg")
 
 ```
 
@@ -388,20 +403,9 @@ allPops <- function(input){
   return(list)
 }
 
-myPop <- allPops(data) # make a list of all 26 populations included in the study
+allPop <- allPops(data) # make a list of all 26 populations included in the study
 # now, re-run the pipeline up to the heat map generation step:
-
-otherInfo <- populateDfs(data,myPop,rowData,colData)
-freqInfo <- otherInfo[[1]] # gather effect allele frequency data for the select populations
-bckgdInfo <- otherInfo[[2]] # gather general SNP data for the global average of select populations
-
-hyperRes <- hyperTest(myPop,bckgdInfo)
-enrDf <- hyperRes[[1]] # gather enrichment analysis results for the 225 SNPs and 3 populations
-depDf <- hyperRes[[2]] # gather depletion analysis results for the 225 SNPs and 3 populations
-
-renameColsRows(c("enrDf","depDf"),rowData,myPop)
-hyperComb <- combineHyper(c("enrDf","depDf"),rowData)
-sigRes <- getSig(hyperComb,myPop,0.01)
+valRes <- runPipeline(data,allPop,0.01)
 ```
 
 ```{r, eval=TRUE,tidy = TRUE, cache=FALSE, fig.cap="A heat map of significantly enriched and depleted effect alleles across all 26 populations", out.width = '100%', message=F, warning=F}
@@ -418,8 +422,8 @@ mapContinentToColor<-function(annotations){
 }
 
 continentColors <- mapContinentToColor(annotation)
-makeHeatmap(sigRes,continentColors)
-knitr::include_graphics("heatmap.jpg")
+makeHeatmap(valRes,"heatmap2.jpg",continentColors)
+knitr::include_graphics("heatmap2.jpg")
 ```
 
 The original heat map showing significant enrichment and depletion of the effect alleles of 225 obesity risk SNPs across the 26 populations is shown below for comparison.
