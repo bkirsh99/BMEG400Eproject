@@ -382,12 +382,9 @@ distPlot
 
 The minor allele frequency (MAF) distribution of asthma-related GWAS SNP's across ASW, CEU, and YRI populations is shown below for comparison.
 
-[Minor allele frequency distribution of asthma-associated SNPs for ASW, CEU, and YRI.](change-this!!!!!!!!!!!image_url)
-```{r  out.width = "100%"}
-#install.packages("jpeg")
-#install.packages("here")
-library(jpeg)
-library(here)
+[Minor allele frequency distribution of asthma-associated SNPs for ASW, CEU, and YRI.](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4307746/bin/40246_2014_23_Fig5_HTML.jpg)
+```{r, eval=TRUE,tidy = TRUE, cache=FALSE, fig.cap="A heat map of significantly enriched and depleted effect alleles across the 3 populations", out.width = '100%', message=F, warning=F}
+
 z <- tempfile()
 
 download.file("www.ncbi.nlm.nih.gov/pmc/articles/PMC4307746/bin/40246_2014_23_Fig5_HTML.jpg",z, mode = 'wb')
@@ -441,8 +438,17 @@ knitr::include_graphics("heatmap2.jpg")
 
 The original heat map showing significant enrichment and depletion of the effect alleles of 225 obesity risk SNPs across the 26 populations is shown below for comparison.
 
-[Heatmap of significantly enriched or depleted alleles from the original publication.](change-to-url!!!!)
+[Heatmap of significantly enriched or depleted alleles from the original publication.]("heatmap_original.jpg")
+```{r, eval=TRUE,tidy = TRUE, cache=FALSE, fig.cap="A heat map of significantly enriched and depleted effect alleles across the 3 populations", out.width = '100%', message=F, warning=F}
 
+y <- tempfile()
+
+download.file("https://media.springernature.com/full/springer-static/image/art%3A10.1186%2Fs12864-017-4262-9/MediaObjects/12864_2017_4262_Fig2_HTML.gif?as=jpg",y, mode = 'wb')
+MAF_asthma <- readJPEG(y)
+writeJPEG(MAF_asthma,"original_heatmap.jpg") 
+file.remove(y)
+include_graphics("original_heatmap.jpg") 
+```
 # Conclusions
 
 In general, the results of this re-analysis are consistent with the literature. The additional study that investigated asthma-related variants in precisely the same three populations, ASW, CEU, and YRI, came to strikingly similar conclusions.
