@@ -66,7 +66,9 @@ library(tidyr)
 library(ggvenn)
 library(RColorBrewer)
 library(heatmap3)
-library(data.table) 
+library(data.table)
+library(jpeg)
+library(here)
 ```
 
 ## Overview of the pipeline stages
@@ -382,7 +384,16 @@ distPlot
 
 The minor allele frequency (MAF) distribution of asthma-related GWAS SNP's across ASW, CEU, and YRI populations is shown below for comparison.
 
-[Minor allele frequency distribution of asthma-associated SNPs for ASW, CEU, and YRI.](change-this!!!!!!!!!!!image_url)
+```{r, eval=TRUE,tidy = TRUE, cache=FALSE, fig.cap="The minor allele frequency (MAF) distribution of asthma-related GWAS SNP's across ASW, CEU, and YRI populations", out.width = '100%', message=F, warning=F}
+
+z <- tempfile()
+
+download.file("http://www.ncbi.nlm.nih.gov/pmc/articles/PMC4307746/bin/40246_2014_23_Fig5_HTML.jpg",z, mode = 'wb')
+MAF_asthma <- readJPEG(z)
+writeJPEG(MAF_asthma,"MAF_asthma.jpg") 
+file.remove(z)
+include_graphics("MAF_asthma.jpg") 
+```
 
 Lastly, to confirm that the hypergeometric tests and clustering methods applied to the 3 populations were in line with those from the original publication, we also generated a heat map of the enrichment/depletion p-values (log10 based) of effect alleles in all 26 populations. The use of a pipeline for most aspects of the project greatly facilitated this step, as the only parameter to be modified was the populations under investigation.
 
@@ -428,7 +439,16 @@ knitr::include_graphics("heatmap2.jpg")
 
 The original heat map showing significant enrichment and depletion of the effect alleles of 225 obesity risk SNPs across the 26 populations is shown below for comparison.
 
-[Heatmap of significantly enriched or depleted alleles from the original publication.](change-to-url!!!!)
+```{r, eval=TRUE,tidy = TRUE, cache=FALSE, fig.cap="The original heat map showing significant enrichment and depletion of the effect alleles of 225 obesity risk SNPs across the 26 populations", out.width = '100%', message=F, warning=F}
+
+y <- tempfile()
+
+download.file("https://media.springernature.com/full/springer-static/image/art%3A10.1186%2Fs12864-017-4262-9/MediaObjects/12864_2017_4262_Fig2_HTML.gif?as=jpg",y, mode = 'wb')
+MAF_asthma <- readJPEG(y)
+writeJPEG(MAF_asthma,"original_heatmap.jpg") 
+file.remove(y)
+include_graphics("original_heatmap.jpg") 
+```
 
 # Conclusions
 
