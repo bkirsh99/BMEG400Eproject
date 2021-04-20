@@ -742,4 +742,4 @@ allPops <- function(input){
 
 2. Mersha, T. B., & Abebe, T. (2015). Self-reported race/ethnicity in the age of genomic research: its potential impact on understanding health disparities. Human genomics, 9(1), 1. https://doi.org/10.1186/s40246-014-0023-x
 
-3. Global Health Observatory, World Health Organization (The 2017 update).Prevalence of obesity among adults, BMI ≥ 30, age-standardized [Data table]. Retrieved from https://apps.who.int/gho/data/view.main.CTRY2450A?lang=en
+3. Global Health Observatory, World Health Organization (The 2017 update). Prevalence of obesity among adults, BMI ≥ 30, age-standardized [Data table]. Retrieved from https://apps.who.int/gho/data/view.main.CTRY2450A?lang=en
