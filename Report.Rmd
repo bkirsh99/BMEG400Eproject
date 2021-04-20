@@ -471,15 +471,217 @@ When we leveled-off the comparison of this re-analysis to the original study by 
 Thus, we conclude that ancestral genetics might in fact play a role in the disease susceptibility to some extent. However, obesity and obesity-related traits are the product of combined effects of multiple different genetic variants and their interaction with surrounding environmental variables, so environmental factors such as diet, climate, local pathogens and lifestyle are large contributors as well.
 
 # Appendix
-
 ## Appendix A: populateDfs
+```{r, eval = TRUE, echo=TRUE, tidy=TRUE, tidy.opts=list(width.cutoff=60)}
+# function: "populateDfs": a function to populate data frames with user-specified population data from the original study
+# argument(s): "input": the table from the original publication
+#              "list": a vector of population codes to be investigated in the re-analysis, as per 1000 Genomes convention
+#              "rows": a vector of row names (i.e., SNP IDs)
+#              "cols": a vector of column names (i.e., SNP information)               
+# return value(s): "popInfo": a data frame of population-specific effect allele frequency data
+#                  "backgroundInfo": a data frame of global population SNP data, which consists of all user-specified populations pulled together 
+#                  "XINfo": n data frames of population-specific SNP data, whcih consists of the breakdown of "backgroundInfo" into the distinct populations
+populateDfs <- function(input,list,rows,cols){ 
+  popInfo <- data.frame(row.names=rows)
+  backgroundInfo <- data.frame(matrix(nrow=length(rows),ncol=length(cols)))
+  
+  colnames(backgroundInfo) <- cols
+  backgroundInfo$population <- "ALL"
+  backgroundInfo$`GWAS P-value` <- input$`GWAS P-value`
+  backgroundInfo[is.na(backgroundInfo)] <- 0
+  for(i in seq(from=4, to=ncol(input), by=5)){
+    population <- toString(input[1,i])
+    if(population %in% list){
+      popInfo[population] <- input[,i+4]
+      assign(paste(population,"Info",sep=""), input[,i:(i+4)], envir = .GlobalEnv)
+      backgroundInfo["effect allele number"] <- 
+        as.numeric(backgroundInfo[["effect allele number"]]) + as.numeric(input[["effect allele number"]])
+      backgroundInfo["other allele number"] <- 
+        as.numeric(backgroundInfo[["other allele number"]]) + as.numeric(input[["other allele number"]])
+      backgroundInfo["total allele number"] <- 
+        as.numeric(backgroundInfo[["total allele number"]]) + as.numeric(input[["total allele number"]])
+      backgroundInfo["effect allele frequency"] <- 
+        as.numeric(backgroundInfo[["effect allele frequency"]]) + as.numeric(input[["effect allele frequency"]])
+    }
+  }
+  
+  return(list(popInfo,backgroundInfo))
+  
+}
+```
 
 ## Appendix B: hyperTest, renameColsRows, and combineHyper
-
+```{r, eval=TRUE,echo=TRUE}
+# function: "hyperTest": a function to perform the enrichment analysis using Fisher’s two-tail exact test (two hypergeometric tests, one for enrichment and another for depletion, are conducted per SNP)
+# argument(s): "list": a vector of population codes to be investigated in the re-analysis, as per 1000 Genomes convention
+#              "background": a data frame of global population SNP data, which consists of all user-specified populations pulled together 
+# return value(s): "enrichmentDf": a data frame containing the results of the enrichment analysis
+#                  "depletionDf": a data frame containing the results of the depletion analysis
+hyperTest <- function(list,background){
+  enrichmentDf <- data.frame()
+  depletionDf <- data.frame()
+  
+  popDfs <- paste(list,"Info",sep="")
+  
+  for(i in 1:nrow(background)){
+    a <- c()
+    b <- c()
+    for (df in popDfs){
+      info <- get(df)
+      m <- as.numeric(background$`effect allele number`[i]) # total number of effect alleles in the population
+      n <- as.numeric(background$`other allele number`[i]) # total number of other alleles in the population
+      k <- as.numeric(info$`total allele number`[i]) # total number of alleles (effect + other) in the sample
+      q <- as.numeric(info$`effect allele number`[i]) # number of effect alleles selected from the sample
+      
+      # phyper(q,m,n,k) = phyper(success-in-sample, success-in-bkgd, failure-in-bkgd, sample-size)
+      a <- cbind(a,phyper(q=q-1,m=m,n=n,k=k,lower.tail=FALSE)) # over-representation (enrichment)
+      b <- cbind(b,phyper(q=q,m=m,n=n,k=k,lower.tail=TRUE)) # under-representation (depletion)
+    }
+    enrichmentDf <- rbind(enrichmentDf,a)
+    depletionDf <- rbind(depletionDf,b)
+  }
+  return(list(enrichmentDf,depletionDf))
+}
+# function: "renameColsRows": a function to re-name data frames, modifying rows to SNP IDs columns to population IDs 
+# argument(s): "dfs": a list of data frames (as strings) to be modified
+#              "rows": a vector of row names (i.e., SNP IDs)
+#              "list": a vector of population codes to be investigated in the re-analysis, as per 1000 Genomes convention
+# return value(s): NA (modifies the data frames in the global environment)
+renameColsRows <- function(dfs,rows,list){
+  for(df in dfs) {
+    df.tmp <- data.frame(get(df))
+    colnames(df.tmp) <- list
+    rownames(df.tmp) <- rows
+    assign(df, df.tmp, envir = .GlobalEnv)
+  }
+}
+# function: "combineHyper": a function to combine two data frames, namely the ones produced by hyperTest (enrichment and depletion)
+# argument(s): "dfs": a list of data frames (as strings) to be modified
+#              "rows": a vector of row names (i.e., SNP IDs)
+# return value(s): hyperRes": a data frame holding the combined results of the enrichment/depletion analysis
+combineHyper <- function(dfs,rows){
+  hyperRes <- data.frame()
+  for(df in dfs) {
+    df.tmp <- get(df)
+    df.tmp$type <- sub("Df","",df)
+    df.tmp$`GWAS P-value` <- as.numeric(data$`GWAS P-value`[match(rownames(df.tmp),rows)])
+    assign(df, df.tmp)
+    hyperRes <- rbind(hyperRes,df.tmp)
+  }
+  return(hyperRes)
+  
+}
+```
 ## Appendix C: makeVenn, makeHeatmap, and plotDist
+```{r,eval=TRUE,echo=TRUE}
+# function: "makeVenn": a function to create a Venn diagram that illustrates the differences and similarities between the populations under investigation
+# argument(s): "df": a data frame of p-values (either enrichment or depletion)
+#              "list": a vector of population codes to be investigated in the re-analysis, as per 1000 Genomes convention
+#              "sig": the significance level (alpha)
+# return value(s): "plot": a Venn diagram
+makeVenn <- function(df,list,sig){
+  cutoff <- sig / (2*length(list)*nrow(df)) # control the family-wise error rate (FWER) from MHT using Bonferroni correction
+  
+  filteredDf <- data.frame(df < cutoff)
+  table <- table(rowSums(filteredDf))
+  plot <- ggvenn(filteredDf)
+  return(plot)
+}
+# function: "getSig": a function to filter the output of the enrichment/depletion analysis for significant results
+# argument(s): "df": a data frame of p-values (either enrichment or depletion)
+#              "list": a vector of population codes to be investigated in the re-analysis, as per 1000 Genomes convention
+#              "sig": the significance level (alpha)
+# return value(s): "logDf": a data frame with the log10 transformed p-values of significantly enriched and depleted effect alleles
+getSig <- function(df,list,sig){
+  cutoff <- sig / (2*length(list)*nrow(df))
+  sigDf <- df[!rowSums(df[,1:(ncol(df)-2)] < cutoff)==0,,drop=FALSE] # remove rows whose raw p-value is not significant at alpha 
+  logDf <- sigDf %>% mutate_at(1:(ncol(sigDf)-2), log10) # log10 transform p-values
+  return(logDf)
+}
+# function: "makeHeatmap": a function to create a heat map that illustrates the enrichment/depletion of significant SNPs across the populations under investigation
+# argument(s): "df": a data frame with the log10 transformed p-values of significantly enriched and depleted effect alleles
+#              "groupColours": a vector that annotatess the column values with colours
+#              "fname": output file name for heat map
+# return value(s): NA (saves the heat map as a .jpeg file to the current directory)
+makeHeatmap <- function(df,fname,groupColours){
+  heatmapDf <- df
+  heatmapDf[heatmapDf$type == "enr",] <- heatmapDf[heatmapDf$type == "enr",] %>% mutate_at(1:(ncol(heatmapDf)-2), ~ . * -1)
+  # the negative of log10 of the p-value (a positive number) is used to represent enriched effect allele of a SNP for a population in the heatmap
+  # the actual value of log10 of the p-value (a negative number) is used to represent depleted effect allele of a SNP for a population in the heatmap
+  
+  heatmapMtx <- as.matrix(heatmapDf[ , 1:(ncol(heatmapDf)-2)]) # create a matrix from the FWER filtered, combined, log-transformed, and additive inverse-corrected p-values
+  heatmapMtx[!is.finite(heatmapMtx)] <- 0
+  rm <- apply(heatmapMtx, 1, var) == 0
+  y <- heatmapMtx[!rm,]
+  hr <- hclust(as.dist(1-cor(t(y), method = "pearson")), method = "centroid")
+  hc <- hclust(as.dist(1-cor(y, method = "pearson")), method = "centroid")
+  col_fun = colorRampPalette(c("green", "black", "red"))(1024)
+  jpeg(file=fname)
+  if(missing(groupColours)){
+    heatmap3(y, Rowv = as.dendrogram(hr), Colv = as.dendrogram(hc), col=col_fun,scale="row",margins=c(3,7),cexRow=0.8,cexCol=1,file="heatmap.pdf")
+  } else {
+    heatmap3(y, Rowv = as.dendrogram(hr), Colv = as.dendrogram(hc), ColSideColors=groupColours,legendfun=function()showLegend(legend=c("AFR","EUR","SAS","EAS","AMR"),col=c("blue","grey","red","yellow","green")),col=col_fun,scale="row",margins=c(3,7),cexRow=0.8,cexCol=1,file=fname)
+  }
+    dev.off()
+}
+  
+# function: "plotDist": a function to plot the distribution of effect allele frequencies for select SNPs
+# argument(s): "df": a data frame with the log10 transformed p-values of significantly enriched and depleted effect alleles
+#              "frequency": a data frame containing the effect allele frequencies for the select populations
+# return value(s): "plot": a distribution frequency plot
+plotDist <- function(df,frequency){
+  freqDf <- df[!rowSums(abs(df[,1:(ncol(df)-2)]) < 10E-100)==0,,drop=FALSE] # remove rows whose log10 transformed p-value is not significant at 10E-100
+  freqDf <- freqDf[freqDf$`GWAS P-value` < 5E-08,]  # remove rows whose SNPs has not reached genome-wide significance (5 × 10−8) in GWA studies
+  filteredSNP <- rownames(freqDf)
+  
+  frequency["id"] <- rownames(frequency)
+  meltedPopDf <- melt(frequency, id.vars="id", value.name="MAF", variable.name="Population")
+  filteredPopDf <- meltedPopDf[meltedPopDf$id %in% filteredSNP ,]
+  plot <- ggplot(filteredPopDf,aes(x=id,y=as.numeric(MAF),fill=Population)) + geom_dotplot(binaxis='y', stackdir='center')
+  plot <- plot + ggtitle("Plot of effect allele frequency distribution") +
+  xlab("SNP ID") + ylab("Effect Allele Frequency")
+  plot <- plot + theme(axis.text.x=element_text(angle=90, hjust=1))
+  return(plot)
+}
+```
 
 ## Appendix D: runPipeline
-
+```{r, eval=TRUE, message=FALSE,echo=TRUE}
+# function: "runPipeline": a function to run the entire pipeline for the oriinal study data and user-defined populations
+# argument(s): "input": a data frame containing data from the original publication
+#              "list": a vector of population codes to be investigated in the re-analysis, as per 1000 Genomes convention
+#             "sig": the significance level (alpha)
+# return value(s): "results": a data frame holding the combined results of the enrichment/depletion analysis
+runPipeline <- function(input,list,sig){
+  varInfo <- input[,1:3] # gather general SNP data (SNP ID, effect allele, other allele)
+  rowData <<- input$`SNP ID`
+  colData <<- c("population","effect allele number","other allele number",
+             "total allele number","effect allele frequency")
+  otherInfo <- populateDfs(input,list,rowData,colData)
+  freqInfo <<- otherInfo[[1]] # gather effect allele frequency data for the select populations
+  bckgdInfo <<- otherInfo[[2]] # gather general SNP data for the global average of select populations
+  hyperRes <<- hyperTest(list,bckgdInfo)
+  enrDf <<- hyperRes[[1]] # gather enrichment analysis results for the 225 SNPs and select populations
+  depDf <<- hyperRes[[2]] # gather depletion analysis results for the 225 SNPs and select populations
+  renameColsRows(c("enrDf","depDf"),rowData,list)
+  hyperComb <<- combineHyper(c("enrDf","depDf"),rowData)
+  results <- getSig(hyperComb,list,sig)
+  return(results)
+}
+```
 ## Appendix E: allPops
-
+```{r, eval = TRUE,echo=TRUE}
+# function: "allPops": a function to retrieve the names of all surveyed populations (26)
+# argument(s): "input": the table from the original publication
+# return value(s): "list": a vector of population codes reported in the study, as per 1000 Genomes convention
+allPops <- function(input){
+  list <- c()
+  for(i in seq(from=4, to=ncol(input)-5, by=5)){
+    population <- toString(input[1,i])
+    list <- append(list,population)
+  }
+  return(list)
+}
+```
 # Bibliography
+Mao, L., Fang, Y., Campbell, M. et al. Population differentiation in allele frequencies of obesity-associated SNPs. BMC Genomics 18, 861 (2017). https://doi.org/10.1186/s12864-017-4262-9
