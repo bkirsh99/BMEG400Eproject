@@ -738,6 +738,8 @@ allPops <- function(input){
 }
 ```
 # Bibliography
-Mao, L., Fang, Y., Campbell, M. et al. Population differentiation in allele frequencies of obesity-associated SNPs. BMC Genomics 18, 861 (2017). https://doi.org/10.1186/s12864-017-4262-9
+1. Mao, L., Fang, Y., Campbell, M., & Southerland, W. M. (2017). Population differentiation in allele frequencies of obesity-associated SNPs. BMC genomics, 18(1), 861. https://doi.org/10.1186/s12864-017-4262-9
 
-Mersha TB, Abebe T. Self-reported race/ethnicity in the age of genomic research: its potential impact on understanding health disparities. Hum Genomics. 2015;9(1):1. Published 2015 Jan 7. doi:10.1186/s40246-014-0023-x
+2. Mersha, T. B., & Abebe, T. (2015). Self-reported race/ethnicity in the age of genomic research: its potential impact on understanding health disparities. Human genomics, 9(1), 1. https://doi.org/10.1186/s40246-014-0023-x
+
+3. Global Health Observatory, World Health Organization (The 2017 update).Prevalence of obesity among adults, BMI ≥ 30, age-standardized [Data table]. Retrieved from https://apps.who.int/gho/data/view.main.CTRY2450A?lang=en
