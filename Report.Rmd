@@ -389,22 +389,7 @@ distPlot
 
 The minor allele frequency (MAF) distribution of asthma-related GWAS SNP's across ASW, CEU, and YRI populations is shown below for comparison with the aforementioned publication (Figure 5).
 
-<<<<<<< HEAD
 ```{r, eval=TRUE,tidy = TRUE, cache=FALSE, echo=FALSE, fig.cap="The minor allele frequency (MAF) distribution of asthma-related GWAS SNP's across the ASW, YRI, and CEU populations", out.width = '100%', message=F, warning=F}
-=======
-[Minor allele frequency distribution of asthma-associated SNPs for ASW, CEU, and YRI.](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4307746/bin/40246_2014_23_Fig5_HTML.jpg)
-```{r, eval=TRUE,tidy = TRUE, cache=FALSE, fig.cap="The minor allele frequency (MAF) distribution of asthma-related GWAS SNP's across ASW, CEU, and YRI populations", out.width = '100%', message=F, warning=F}
-
-
-z <- tempfile()
-
-download.file("www.ncbi.nlm.nih.gov/pmc/articles/PMC4307746/bin/40246_2014_23_Fig5_HTML.jpg",z, mode = 'wb')
-MAF_asthma <- readJPEG(z)
-writeJPEG(MAF_asthma,"MAF_asthma.jpg") 
-file.remove(z)
-include_graphics("MAF_asthma.jpg") 
-```
->>>>>>> 7a314ce19a82b73ee89e65c874a89357aa585b07
 
 z <- tempfile()
 
@@ -441,7 +426,7 @@ allPop <- allPops(data) # make a list of all 26 populations included in the stud
 valRes <- runPipeline(data,allPop,0.01)
 ```
 
-```{r, eval=TRUE,tidy = TRUE, cache=FALSE, fig.cap="A heat map of significantly enriched and depleted effect alleles across the 26 populations", out.width = '100%', message=F, warning=F}
+```{r, eval=TRUE,echo=FALSE}
 
 annotation <- as.data.frame(fread("pop.txt",select=c(1,3)),stringsAsFactors=FALSE)
 annotation <- annotation[order(annotation$`Population Code`),]
@@ -455,13 +440,15 @@ mapContinentToColor<-function(annotations){
 }
 
 continentColors <- mapContinentToColor(annotation)
+```
+
+```{r, eval=TRUE,tidy = TRUE, cache=FALSE, fig.cap="A heat map of significantly enriched and depleted effect alleles across the 26 populations", out.width = '100%', message=F, warning=F}
 makeHeatmap(valRes,"heatmap2.jpg",continentColors)
 knitr::include_graphics("heatmap2.jpg")
 ```
 
 The original heat map showing significant enrichment and depletion of the effect alleles of 225 obesity risk SNPs across the 26 populations is shown below for comparison (Figure 7).
 
-<<<<<<< HEAD
 ```{r, eval=TRUE,tidy = TRUE, cache=FALSE, echo=FALSE,fig.cap="The original heat map showing significant enrichment and depletion of the effect alleles of 225 obesity risk SNPs across the 26 populations", out.width = '100%', message=F, warning=F}
 
 y <- tempfile()
@@ -472,19 +459,7 @@ writeJPEG(MAF_asthma,"original_heatmap.jpg")
 file.remove(y)
 include_graphics("original_heatmap.jpg") 
 ```
-=======
-[Heatmap of significantly enriched or depleted alleles from the original publication.]("heatmap_original.jpg")
-```{r, eval=TRUE,tidy = TRUE, cache=FALSE, fig.cap="The original heat map showing significant enrichment and depletion of the effect alleles of 225 obesity risk SNPs across the 26 populations", out.width = '100%', message=F, warning=F}
 
-y <- tempfile()
->>>>>>> 7a314ce19a82b73ee89e65c874a89357aa585b07
-
-download.file("https://media.springernature.com/full/springer-static/image/art%3A10.1186%2Fs12864-017-4262-9/MediaObjects/12864_2017_4262_Fig2_HTML.gif?as=jpg",y, mode = 'wb')
-MAF_asthma <- readJPEG(y)
-writeJPEG(MAF_asthma,"original_heatmap.jpg") 
-file.remove(y)
-include_graphics("original_heatmap.jpg") 
-```
 # Conclusions
 
 In general, the results of this re-analysis are consistent with the literature. The additional study that investigated asthma-related variants in precisely the same three populations, ASW, CEU, and YRI, came to the strikingly similar conclusion that the ASW population displayed intermediate allele frequencies of obesity-related SNPs to the ancestral YRI and CEU populations. This conclusion cannot be extended to enrichment and depletion patterns, as the YRI population appeared to showcase intermediate characteristics between the ASW and CEU populations. This is somewhat in line with another conclusion made by the original study, which stated that "it is the allele frequencies, not the number of obesity-associated SNPs, that determine the outcome of composite scores." 
