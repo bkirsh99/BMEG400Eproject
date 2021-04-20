@@ -44,21 +44,6 @@ Large research efforts have been made to identify genomic regions, variants in c
 
 In a study by [Mao et al.](https://bmcgenomics.biomedcentral.com/articles/10.1186/s12864-017-4262-9#Equ1), worldwide differences in the effect allele frequency of 225 obesity-associated SNPs were investigated. The original analysis was conducted to identify significantly enriched or depleted effect alleles across 26 populations, which were later interrogated with respect to the clustering patterns that emerged within and between different continental groups. Additionally, researchers calculated the composite risk scores for each population. Their results suggest that over 85% of effect alleles exhibit significant allele frequency differences and that population-level differences in genetic risk scores are correlated with obesity prevalence.
 
-```{r, include=FALSE}
-# install any of these that you might not have already
-library(knitr)
-library(readxl)
-library(reshape2)
-library(ggplot2)
-library(dplyr)
-library(tidyr)
-library(ggvenn)
-library(RColorBrewer)
-library(heatmap3)
-library(data.table)
-library(jpeg)
-library(here)
-```
 
 ```{r, echo=FALSE}
 x <- tempfile()
@@ -541,7 +526,7 @@ Thus, we conclude that ancestral genetics might in fact play a role in the disea
 
 # Appendix
 ## Appendix A: populateDfs
-```{r, eval = TRUE, echo=TRUE, tidy=TRUE, tidy.opts=list(width.cutoff=60)}
+```{r, eval = FALSE, echo=TRUE, tidy=TRUE, tidy.opts=list(width.cutoff=60)}
 # function: "populateDfs": a function to populate data frames with user-specified population data from the original study
 # argument(s): "input": the table from the original publication
 #              "list": a vector of population codes to be investigated in the re-analysis, as per 1000 Genomes convention
@@ -580,7 +565,7 @@ populateDfs <- function(input,list,rows,cols){
 ```
 
 ## Appendix B: hyperTest, renameColsRows, and combineHyper
-```{r, eval=TRUE,echo=TRUE}
+```{r, eval=FALSE,echo=TRUE}
 # function: "hyperTest": a function to perform the enrichment analysis using Fisher’s two-tail exact test (two hypergeometric tests, one for enrichment and another for depletion, are conducted per SNP)
 # argument(s): "list": a vector of population codes to be investigated in the re-analysis, as per 1000 Genomes convention
 #              "background": a data frame of global population SNP data, which consists of all user-specified populations pulled together 
@@ -642,7 +627,7 @@ combineHyper <- function(dfs,rows){
 }
 ```
 ## Appendix C: makeVenn, makeHeatmap, and plotDist
-```{r,eval=TRUE,echo=TRUE}
+```{r,eval=FALSE,echo=TRUE}
 # function: "makeVenn": a function to create a Venn diagram that illustrates the differences and similarities between the populations under investigation
 # argument(s): "df": a data frame of p-values (either enrichment or depletion)
 #              "list": a vector of population codes to be investigated in the re-analysis, as per 1000 Genomes convention
@@ -715,7 +700,7 @@ plotDist <- function(df,frequency){
 ```
 
 ## Appendix D: runPipeline
-```{r, eval=TRUE, message=FALSE,echo=TRUE}
+```{r, eval=FALSE, message=FALSE,echo=TRUE}
 # function: "runPipeline": a function to run the entire pipeline for the oriinal study data and user-defined populations
 # argument(s): "input": a data frame containing data from the original publication
 #              "list": a vector of population codes to be investigated in the re-analysis, as per 1000 Genomes convention
@@ -739,7 +724,7 @@ runPipeline <- function(input,list,sig){
 }
 ```
 ## Appendix E: allPops
-```{r, eval = TRUE,echo=TRUE}
+```{r, eval = FALSE,echo=TRUE}
 # function: "allPops": a function to retrieve the names of all surveyed populations (26)
 # argument(s): "input": the table from the original publication
 # return value(s): "list": a vector of population codes reported in the study, as per 1000 Genomes convention
@@ -754,3 +739,5 @@ allPops <- function(input){
 ```
 # Bibliography
 Mao, L., Fang, Y., Campbell, M. et al. Population differentiation in allele frequencies of obesity-associated SNPs. BMC Genomics 18, 861 (2017). https://doi.org/10.1186/s12864-017-4262-9
+
+Mersha TB, Abebe T. Self-reported race/ethnicity in the age of genomic research: its potential impact on understanding health disparities. Hum Genomics. 2015;9(1):1. Published 2015 Jan 7. doi:10.1186/s40246-014-0023-x
