@@ -44,6 +44,75 @@ Large research efforts have been made to identify genomic regions, variants in c
 
 In a study by [Mao et al.](https://bmcgenomics.biomedcentral.com/articles/10.1186/s12864-017-4262-9#Equ1), worldwide differences in the effect allele frequency of 225 obesity-associated SNPs were investigated. The original analysis was conducted to identify significantly enriched or depleted effect alleles across 26 populations, which were later interrogated with respect to the clustering patterns that emerged within and between different continental groups. Additionally, researchers calculated the composite risk scores for each population. Their results suggest that over 85% of effect alleles exhibit significant allele frequency differences and that population-level differences in genetic risk scores are correlated with obesity prevalence.
 
+```{r, include=FALSE}
+# install any of these that you might not have already
+library(knitr)
+library(readxl)
+library(reshape2)
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+library(ggvenn)
+library(RColorBrewer)
+library(heatmap3)
+library(data.table)
+library(jpeg)
+library(here)
+```
+
+```{r, echo=FALSE}
+x <- tempfile()
+download.file("apps.who.int/gho/athena/api/GHO/NCD_BMI_30A.csv?filter=COUNTRY:*","WHO_BMI", mode = 'wb' )
+WHO_BMI <- read.csv('WHO_BMI')
+# removing NAs (missing values)
+WHO_BMI <- WHO_BMI[complete.cases(WHO_BMI), ]
+
+# parameters to filter
+sex <- c("BTSX")
+year <- c("2010")
+EU_USA_countries <-c("ITA", "ESP", "FIN", "USA", "GBR")
+ASN_countries <- c("JPN", "KOR", "VNM", "CHN")
+countries <- c("ITA", "ESP", "FIN", "USA", "GBR", "JPN", "KOR", "VNM", "CHN")
+
+# filtering by parameters
+filtWHO_BMI <- WHO_BMI[WHO_BMI$COUNTRY %in% countries ,]
+filtWHO_BMI <- filtWHO_BMI[filtWHO_BMI$SEX %in% sex ,]
+filtWHO_BMI <- filtWHO_BMI[filtWHO_BMI$YEAR %in% year ,]
+
+
+# plotting bar chart
+plot_WHO <- ggplot(filtWHO_BMI, aes(x=reorder(factor(COUNTRY),Numeric), y=Numeric)) +
+  geom_bar(stat='identity') +
+  coord_flip() +
+  xlab("Country") +
+  ylab("Obesity prevalence %") +
+  ggtitle("Obesity prevalence by country")
+
+plot_WHO
+```
+
+```{r, echo=FALSE}
+
+regions <- c("AFR", "EUR")
+sex <- c("BTSX")
+year <- c("2010","2011","2012","2013","2014","2015","2016")
+filtregWHO_BMI <- WHO_BMI[WHO_BMI$REGION %in% regions ,]
+filtregWHO_BMI <- filtregWHO_BMI[filtregWHO_BMI$SEX %in% sex ,]
+filtregWHO_BMI <- filtregWHO_BMI[filtregWHO_BMI$YEAR %in% year ,]
+
+
+plot_vis <- ggplot(filtregWHO_BMI, aes(x=YEAR)) + 
+  geom_point(aes(y=Numeric, col=REGION)) + 
+  labs(title="Time Series of BMI distributions per year ",
+       caption="Source: Economics", 
+       y="Obesity prevelence %", 
+       color=NULL) +  # title and caption
+  scale_color_manual(labels = c("AFR", "EUR"), 
+                     values = c("AFR"="#00ba38", "EUR"="#f8766d")) +  # line color
+  theme(axis.text.x = element_text(angle = 90, vjust=0.5, size = 8),  # rotate x axis text
+        panel.grid.minor = element_blank())
+plot_vis
+```
 ## Goals and scope of the re-analysis
 
 The original publication concluded that populations belonging to the same continental group showcased similar patterns in allele enrichment and depletion, suggesting that continent-specific environmental factors may shape the allele abundance of obesity-associated SNPs. In this re-analysis, however, we focus on the role of genetic factors, particularly ancestry-enrichment, by investigating admixed populations from geographically distant regions.
