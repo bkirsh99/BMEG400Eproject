@@ -743,3 +743,5 @@ allPops <- function(input){
 2. Mersha, T. B., & Abebe, T. (2015). Self-reported race/ethnicity in the age of genomic research: its potential impact on understanding health disparities. Human genomics, 9(1), 1. https://doi.org/10.1186/s40246-014-0023-x
 
 3. Global Health Observatory, World Health Organization (The 2017 update). Prevalence of obesity among adults, BMI ≥ 30, age-standardized [Data table]. Retrieved from https://apps.who.int/gho/data/view.main.CTRY2450A?lang=en
+
+4. Li, C., & Wong, W. H. (2001). Model-based analysis of oligonucleotide arrays: expression index computation and outlier detection. Proceedings of the National Academy of Sciences of the United States of America, 98(1), 31–36. https://doi.org/10.1073/pnas.011404098
