@@ -9,7 +9,7 @@ header-includes:
 title: "Project Report: A Reproduction Analysis of Allele Frequency Differences Between Populations"
 thanks: "The original study, **Population differentiation in allele frequencies of obesity-associated SNPs**, is available in BMC Genomics (https://bmcgenomics.biomedcentral.com/articles/10.1186/s12864-017-4262-9#Equ1)."
 author:
-  - Bianca Kirsh
+  - Bianca Kirsh, Josh De Freitas
 abstract: "This document presents the re-analysis of a published genomics study, including the written report, integrated code, and graphs."
 keywords: "genomics, analysis"
 date: "`r format(Sys.time(), '%B %d, %Y')`"
@@ -35,83 +35,6 @@ knitr::opts_chunk$set(cache=TRUE,
                       if (file.rename(x, x2)) x2 else x
                       })
 ```
-
-# Introduction
-
-## Overview of the original experiment
-
-Large research efforts have been made to identify genomic regions, variants in candidate genes, and environmental factors that contribute to disease-associated health disparities across populations.
-
-In a study by [Mao et al.](https://bmcgenomics.biomedcentral.com/articles/10.1186/s12864-017-4262-9#Equ1), worldwide differences in the effect allele frequency of 225 obesity-associated SNPs were investigated. The original analysis was conducted to identify significantly enriched or depleted effect alleles across 26 populations, which were later interrogated with respect to the clustering patterns that emerged within and between different continental groups. Additionally, researchers calculated the composite risk scores for each population. Their results suggest that over 85% of effect alleles exhibit significant allele frequency differences and that population-level differences in genetic risk scores are correlated with obesity prevalence.
-
-
-```{r, echo=FALSE}
-x <- tempfile()
-download.file("apps.who.int/gho/athena/api/GHO/NCD_BMI_30A.csv?filter=COUNTRY:*","WHO_BMI", mode = 'wb' )
-WHO_BMI <- read.csv('WHO_BMI')
-# removing NAs (missing values)
-WHO_BMI <- WHO_BMI[complete.cases(WHO_BMI), ]
-
-# parameters to filter
-sex <- c("BTSX")
-year <- c("2010")
-EU_USA_countries <-c("ITA", "ESP", "FIN", "USA", "GBR")
-ASN_countries <- c("JPN", "KOR", "VNM", "CHN")
-countries <- c("ITA", "ESP", "FIN", "USA", "GBR", "JPN", "KOR", "VNM", "CHN")
-
-# filtering by parameters
-filtWHO_BMI <- WHO_BMI[WHO_BMI$COUNTRY %in% countries ,]
-filtWHO_BMI <- filtWHO_BMI[filtWHO_BMI$SEX %in% sex ,]
-filtWHO_BMI <- filtWHO_BMI[filtWHO_BMI$YEAR %in% year ,]
-
-
-# plotting bar chart
-plot_WHO <- ggplot(filtWHO_BMI, aes(x=reorder(factor(COUNTRY),Numeric), y=Numeric)) +
-  geom_bar(stat='identity') +
-  coord_flip() +
-  xlab("Country") +
-  ylab("Obesity prevalence %") +
-  ggtitle("Obesity prevalence by country")
-
-plot_WHO
-```
-
-```{r, echo=FALSE}
-
-regions <- c("AFR", "EUR")
-sex <- c("BTSX")
-year <- c("2010","2011","2012","2013","2014","2015","2016")
-filtregWHO_BMI <- WHO_BMI[WHO_BMI$REGION %in% regions ,]
-filtregWHO_BMI <- filtregWHO_BMI[filtregWHO_BMI$SEX %in% sex ,]
-filtregWHO_BMI <- filtregWHO_BMI[filtregWHO_BMI$YEAR %in% year ,]
-
-
-plot_vis <- ggplot(filtregWHO_BMI, aes(x=YEAR)) + 
-  geom_point(aes(y=Numeric, col=REGION)) + 
-  labs(title="Time Series of BMI distributions per year ",
-       caption="Source: Economics", 
-       y="Obesity prevelence %", 
-       color=NULL) +  # title and caption
-  scale_color_manual(labels = c("AFR", "EUR"), 
-                     values = c("AFR"="#00ba38", "EUR"="#f8766d")) +  # line color
-  theme(axis.text.x = element_text(angle = 90, vjust=0.5, size = 8),  # rotate x axis text
-        panel.grid.minor = element_blank())
-plot_vis
-```
-## Goals and scope of the re-analysis
-
-The original publication concluded that populations belonging to the same continental group showcased similar patterns in allele enrichment and depletion, suggesting that continent-specific environmental factors may shape the allele abundance of obesity-associated SNPs. In this re-analysis, however, we focus on the role of genetic factors, particularly ancestry-enrichment, by investigating admixed populations from geographically distant regions.
-
-For these purposes, we reduced the scope to a subset of samples, namely the African American (ASW), African (YRI), and European American (CEU) populations. The main goal of this project is to interrogate the relationship between obesity-related variants and ancestry and elucidate the genetic underpinnings of disease susceptibility across populations.
-
-Ultimately, this re-analysis will illustrate the spectrum of genetic diversity between geographically distant genomes to reveal ancestral biological signatures and systematic differences underlying the obesity epidemic. In doing so, we hope to encourage diversity and inclusion in genomics research, as well as urge for the investigation of genetic variants with extreme allele frequency differences (EAFD) between populations to help address health disparities.
-
-# Methods
-
-This project implements a pipeline that uses the R programming language to automate key components of data processing, analysis, and visualization. Furthermore, it utilizes a wide set of user-defined helper functions that are documented and showcased in the Appendix.
-
-It consists of a re-analysis of the original study, where only 3 out of the 26 populations are investigated to explore the impact of ancestral genetics rather than environmental factors on obesity prevalence.
-
 ```{r, include=FALSE}
 # install any of these that you might not have already
 library(knitr)
@@ -127,6 +50,27 @@ library(data.table)
 library(jpeg)
 library(here)
 ```
+# Introduction
+
+## Overview of the original experiment
+
+Large research efforts have been made to identify genomic regions, variants in candidate genes, and environmental factors that contribute to disease-associated health disparities across populations. In particular, SNPs have often been studied as a factor in a person's susceptibility of developing diseases. 
+
+In a study by [Mao et al.](https://bmcgenomics.biomedcentral.com/articles/10.1186/s12864-017-4262-9#Equ1), worldwide differences in the effect allele frequency of 225 obesity-associated SNPs were investigated. The original analysis was conducted to identify significantly enriched or depleted effect alleles across 26 populations, which were later clustered using hierarchical clustering to gain insight into significance across continental groups. Additionally, researchers calculated the composite risk scores for each population to investigate the effect significantly enriched or depleted alleles have on individuals' genetic risk for obesity. Their results suggest that over 85% of effect alleles exhibit significant allele frequency differences and that population-level differences in genetic risk scores are correlated with obesity prevalence.
+
+## Goals and scope of the re-analysis
+
+The original publication concluded that populations belonging to the same continental group showcased similar patterns in allele enrichment and depletion, suggesting that continent-specific environmental factors may shape the allele abundance of obesity-associated SNPs. In this re-analysis, however, we focus on the role of genetic factors, particularly ancestry-enrichment, by investigating admixed populations from geographically distant regions.
+
+For these purposes, we reduced the scope to a subset of samples, namely the African American (ASW), African (YRI), and European American (CEU) populations. The main goal of this project is to examine the relationship between obesity-related variants and ancestry and elucidate the genetic underpinnings of obesity susceptibility across populations.
+
+Ultimately, this re-analysis will illustrate the spectrum of genetic diversity between geographically distant genomes to reveal ancestral biological signatures and systematic differences underlying the obesity epidemic. In doing so, we hope to encourage diversity and inclusion in genomics research, as well as urge for the investigation of genetic variants with extreme allele frequency differences (EAFD) between populations to help address health disparities. This analysis will also explore the correlation between obesity prevalence and effect allele frequency across the three populations.
+
+# Methods
+
+This project implements a pipeline that uses the R programming language external R packages to automate key components of data processing, analysis, and visualization. Furthermore, it utilizes a wide set of user-defined helper functions that are documented and showcased in the Appendix.
+
+It consists of a re-analysis of the original study, where only 3 out of the 26 populations are investigated to explore the impact of ancestral genetics rather than environmental factors on obesity prevalence and a brief analysis into correlation of population obesity prevalence and effect allele frequency using data collected from the [Global Health Observatory, World Health Organization](https://apps.who.int/gho/data/view.main.CTRY2450A?lang=en)
 
 ## Overview of the pipeline stages
 
@@ -134,13 +78,19 @@ library(here)
 
 For the first stage of the pipeline, we obtained a list of obesity-associated SNPs and their effect allele frequencies from the supplementary material available in the original publication. The authors compiled 225 SNPs from 29 GWA studies in the NHGRI-EBI GWAS Catalog, 19 of which were performed in European populations, 3 in East Asians, 2 in South Asians, 3 in Africans, and 2 in mixed ethnic populations. The corresponding effect allele frequencies were based on genotype information for 26 populations surveyed by the 1000 Genomes Project.
 
-By utilizing pre-compiled, but not pre-processed data, we overcame computationally-intensive and resource-demanding challenges associated with retrieving data from the 1000 Genomes Project. At the same time, we ensured that this re-analysis was conducted on the raw data set used by the original publication prior to any major filtering or manipulation steps.
+By utilizing pre-compiled, but not pre-processed data, we overcame computationally-intensive and resource-demanding challenges associated with retrieving data from the 1000 Genomes Project. At the same time, we ensured that this re-analysis was conducted on the raw data set used by the original publication prior to any major filtering or manipulation steps. Obesity prevalence data from WHO survey was also collected from [Global Health Observatory, World Health Organization](https://apps.who.int/gho/data/view.main.CTRY2450A?lang=en).
 
-As a caveat, data for the calculation of composite risk scores was not published in the original study. The formula used by the authors required information about the 225 SNPs for each person present in the 1000 Genomes Project, including the number of copies of effect alleles at obesity-associated variants and their effect size. Since these could not be retrieved for the reasons mentioned above, we performed two additional analyses on the enrichment and depletion data. An investigation of Venn diagrams and allele frequency distribution plots were thus added to make up for this lacking step in the re-analysis.
+As a limitation, data for the calculation of composite risk scores was not published in the original study. The formula used by the authors required information about the 225 SNPs for each person present in the 1000 Genomes Project, including the number of copies of effect alleles at obesity-associated variants and their effect size. Since these were not retrievable for the aforementioned reasons, two additional analyses on the enrichment and depletion data were performed. An investigation of Venn diagrams and allele frequency distribution plots were also added to supplement the re-analysis.
 
 ```{bash, eval = TRUE, engine.opts='-l',include=FALSE}
 
 wget -q https://static-content.springer.com/esm/art%3A10.1186%2Fs12864-017-4262-9/MediaObjects/12864_2017_4262_MOESM1_ESM.xlsx
+
+```
+```{r, eval = TRUE, echo=FALSE}
+x <- tempfile()
+download.file("apps.who.int/gho/athena/api/GHO/NCD_BMI_30A.csv?filter=COUNTRY:*","WHO_BMI", mode = 'wb' )
+WHO_BMI <- read.csv('WHO_BMI')
 
 ```
 
@@ -203,7 +153,7 @@ Then, we conducted two separate hypergeometric tests for each of the 225 SNPs, o
 
 For further inspection of a smaller subset of SNPs from the original 225 obesity-related variants, we replicated the orinal methods and selected those with enrichment or depletion log10 transformed p-values of at least 10E-100 and genome-wide significance (5 × 10E-08) in GWA studies. This second data set was used to produce the risk (effect) allele frequency distribution plots.
 
-Once again, a set of helper functions were created to aid in data wrangling and hypothesis testing. These are available in [Appendix B: hyperTest, renameColsRows, and combineHyper](#appendix-b-hypertest-renamecolsrows-combinehyper). 
+Once again, a set of helper functions were created to aid in data wrangling and hypothesis testing. These are available in [Appendix B: hyperTest, renameColsRows, and combineHyper](#appendix-b-hypertest-renamecolsrows-combinehyper).  
 
 ```{r, eval=TRUE,echo=FALSE}
 # function: "hyperTest": a function to perform the enrichment analysis using Fisher’s two-tail exact test (two hypergeometric tests, one for enrichment and another for depletion, are conducted per SNP)
@@ -274,11 +224,13 @@ combineHyper <- function(dfs,rows){
 
 ### Data visualization
 
-In this re-analysis, many hypothesis can be made based on the graphical depiction of data. Thus, we created different plots to assist in drawing conclusions about ancestry and admixture as they relate to obesity prevalence. The helper functions are available in [Appendix C: makeVenn, makeHeatmap, and plotDist](#appendix-c-makevenn-makeheatmap-plotdist).
+In this re-analysis, many hypothesis can be made based on the graphical depiction of data. Thus, we created different plots to assist in drawing conclusions about ancestry and admixture as they relate to obesity prevalence. The helper functions are available in [Appendix C: makeVenn, makeHeatmap, plotDist, plotCorrPops](#appendix-c-makevenn-makeheatmap-plotdist).
 
-For clustering, we used the centroid option as the linkage method and correlation-based distance to compute the dissimilarity matrix. These choices are common in gene expression analysis, where clusters of observations are formed based on overall profiles rather than magnitudes (e.g., similar genes are "up" and "down" together, regardless of their absolute expression value). Furthermore, they were made to reproduce the clustering algorithm employed by the tool used in the original study, [dChip](https://sites.google.com/site/dchipsoft/home).
+For clustering, we used the centroid option as the linkage method and correlation-based distance to compute the dissimilarity matrix. These choices are common in gene expression analysis, where clusters of observations are formed based on overall profiles rather than magnitudes (e.g., similar genes are "up" and "down" together, regardless of their absolute expression value). Furthermore, they were made to reproduce the clustering algorithm employed by the tool used in the original study, [dChip](https://doi.org/10.1073/pnas.011404098).
 
 It defines the distance between two genes is as *1-r*, where *r* is the Pearson correlation coefficient between the standardized expression values (make mean 0 and standard deviation 1) of the two genes across the samples used.
+
+For correlation, the most recent survery data available, (2016) to be more representative of current obesity prevalence (%). Combined data from both sexes were used with the obesity prevalence (%) values from the super populations, (AFR and EUR) of the populations in study to provide a broader perspective on obesity prevalence among populations.
 
 ```{r,eval=TRUE,echo=FALSE}
 # function: "makeVenn": a function to create a Venn diagram that illustrates the differences and similarities between the populations under investigation
@@ -354,11 +306,39 @@ plotDist <- function(df,frequency){
   return(plot)
 }
 
+#function: "plotCorrPops"
+# argument(s): "df": a data frame with the BMI ≥ 30, age-standardized
+#              "freq": a data frame containing the effect allele frequencies for the select populations
+#              "sex": a vector containing the sexes to filter by
+#              "superPop": a vector containing the super populations to be investigated
+# return value(s): "plot": a correlation plot of average obesity prevalence and average effect allele frequency
+plotCorrPops <- function(df,freq,sex,year,superPop){
+  filtdf <- df[df$REGION %in% superPop ,]
+  filtdf <- filtdf[filtdf$SEX %in% sex ,]
+  filtdf <- filtdf[filtdf$YEAR %in% year ,]
+  filtdf <- select(filtdf, REGION, Numeric)
+  meanAF <- colMeans(mutate_all(freq, function(x) as.numeric(as.character(x))))
+  meltAF <- reshape2::melt(as.matrix(meanAF), value.name = "MeanEffectAlleleFrequency")
+  AFR <- subset(filtdf, REGION==superPop[2])
+  EUR <- subset(filtdf, REGION==superPop[1])
+  AFR <- na.omit(AFR)
+  EUR <- na.omit(EUR)
+  AFR_mean <- mean(AFR$Numeric)
+  EUR_mean <- mean(EUR$Numeric)
+  
+  avg_prev <- c(AFR_mean,EUR_mean,AFR_mean)
+  corr_data <- cbind(meltAF,avg_prev)
+  
+  plot <- ggplot(corr_data, aes(x = MeanEffectAlleleFrequency, y = avg_prev)) + geom_point() + geom_text(aes(label=Var1),hjust=0.5, vjust=2) + geom_smooth(method=lm, se=FALSE) + ggtitle("") +
+xlab("Average Super Population Effect Allele Frequency") + ylab("Average Super Population Obesity Prevalence %") + ggtitle("Plot of effect allele frequency distribution")
+  return(plot)
+}
+
 ```
 
 ## Results
 
-Finally, we ran the pipeline for the three pre-selected populations, CEU, ASW, and YRI, using yet another helper function described in [Appendix D: runPipeline](#appendix-d-run-pipeline).
+Finally, we ran the pipeline for the three pre-selected populations, CEU, ASW, and YRI, using another helper function described in [Appendix D: runPipeline](#appendix-d-run-pipeline).
 
 ```{r, eval=TRUE, message=FALSE,echo=FALSE}
 
@@ -453,6 +433,16 @@ writeJPEG(MAF_asthma,"MAF_asthma.jpg")
 file.remove(z)
 include_graphics("MAF_asthma.jpg") 
 ```
+### Correlation between effect allele frequency and obesity prevelence %
+The average obesity prevalence of obesity increases from African sub populations such as ASW and YRI with lower significant effect allele frequency to those from European sub populations such as CEU. This suggests that the influence of an individual's ancestry and genetics on their effect allele frequency, may play a role in obesity prevalence among populations.
+
+```{r, eval=TRUE, tidy = TRUE, cache=FALSE, fig.cap="Correlation plot of WHO obesity prevelence and Effect Allele Frequency for the three populations", message=F, warning=F}
+sex <- c("BTSX")
+year <- c("2016")
+superPop <- c("EUR", "AFR")
+corrPlotPops <- plotCorrPops(WHO_BMI, freqInfo,sex ,year ,superPop)
+corrPlotPops 
+```
 
 Lastly, to confirm that the hypergeometric tests and clustering methods applied to the 3 populations were in line with those from the original publication, we also generated a heat map of the enrichment/depletion p-values (log10 based) of effect alleles in all 26 populations (Figure 6). The use of a pipeline for most aspects of this project greatly facilitated this step, as the only parameter to be modified was the populations under investigation. The last helper function is described in [Appendix E: allPops](#appendix-e-allpops).
 
@@ -516,13 +506,15 @@ include_graphics("original_heatmap.jpg")
 
 # Conclusions
 
-In general, the results of this re-analysis are consistent with the literature. The additional study that investigated asthma-related variants in precisely the same three populations, ASW, CEU, and YRI, came to the strikingly similar conclusion that the ASW population displayed intermediate allele frequencies of obesity-related SNPs to the ancestral YRI and CEU populations. This conclusion cannot be extended to enrichment and depletion patterns, as the YRI population appeared to showcase intermediate characteristics between the ASW and CEU populations. This is somewhat in line with another conclusion made by the original study, which stated that "it is the allele frequencies, not the number of obesity-associated SNPs, that determine the outcome of composite scores." 
+In general, the results of this re-analysis are mostly consistent with the literature. The additional study that investigated asthma-related variants in precisely the same three populations, ASW, CEU, and YRI, came to the strikingly similar conclusion that the ASW population displayed intermediate allele frequencies of obesity-related SNPs to the ancestral YRI and CEU populations. This conclusion cannot be extended to enrichment and depletion patterns, as the YRI population appeared to showcase intermediate characteristics between the ASW and CEU populations. This is somewhat in line with another conclusion made by the original study, which stated that "it is the allele frequencies, not the number of obesity-associated SNPs, that determine the outcome of composite scores." 
 
 The differences between this project and the original publication, mainly the large discrepancy between the proportion of SNPs that possess effect alleles significantly enriched or depleted in at least one of the populations (i.e., 86.7% vs. 35.55%), is most likely due to the gross reduction in sample size from 26 down to 3. This impacted the hypergeometric tests and, thus, all analysis downstream of it.
 
 When we leveled-off the comparison of this re-analysis to the original study by considering all 26 populations, as above, much more similar results were obtained.
 
-Thus, we conclude that ancestral genetics might in fact play a role in the disease susceptibility to some extent. However, obesity and obesity-related traits are the product of combined effects of multiple different genetic variants and their interaction with surrounding environmental variables, so environmental factors such as diet, climate, local pathogens and lifestyle are large contributors as well.
+Although, the correlation between the three populations provides some insight, it is still limited. The original study also investigated correlation between WHO-surveyed obesity prevalence and population-level average of composite genetic risk scores. This comparison highlights how genetic risk affects obesity prevalence across wider set of populations which would give a deeper understanding of genetic effects onobesity prevalence.
+
+Thus, ancestral genetics might in fact play a role in the disease susceptibility. However, obesity and obesity-related traits are the result of combined effects of multiple different genetic variants and their interaction with surrounding environmental variables, so socio-economic factors such as diet, climate, local pathogens and lifestyle are large contributors as well.
 
 # Appendix
 ## Appendix A: populateDfs
@@ -626,7 +618,7 @@ combineHyper <- function(dfs,rows){
   
 }
 ```
-## Appendix C: makeVenn, makeHeatmap, and plotDist
+## Appendix C: makeVenn, makeHeatmap, plotDist and plotCorrPops
 ```{r,eval=FALSE,echo=TRUE}
 # function: "makeVenn": a function to create a Venn diagram that illustrates the differences and similarities between the populations under investigation
 # argument(s): "df": a data frame of p-values (either enrichment or depletion)
@@ -678,7 +670,7 @@ makeHeatmap <- function(df,fname,groupColours){
   }
     dev.off()
 }
-  
+
 # function: "plotDist": a function to plot the distribution of effect allele frequencies for select SNPs
 # argument(s): "df": a data frame with the log10 transformed p-values of significantly enriched and depleted effect alleles
 #              "frequency": a data frame containing the effect allele frequencies for the select populations
@@ -697,7 +689,36 @@ plotDist <- function(df,frequency){
   plot <- plot + theme(axis.text.x=element_text(angle=90, hjust=1))
   return(plot)
 }
+
+#function: "plotCorrPops"
+# argument(s): "df": a data frame with the BMI ≥ 30, age-standardized
+#              "freq": a data frame containing the effect allele frequencies for the select populations
+#              "sex": a vector containing the sexes to filter by
+#              "superPop": a vector containing the super populations to be investigated
+# return value(s): "plot": a correlation plot of average obesity prevalence and average effect allele frequency
+plotCorrPops <- function(df,freq,sex,year,superPop){
+  filtdf <- df[df$REGION %in% superPop ,]
+  filtdf <- filtdf[filtdf$SEX %in% sex ,]
+  filtdf <- filtdf[filtdf$YEAR %in% year ,]
+  filtdf <- select(filtdf, REGION, Numeric)
+  meanAF <- colMeans(mutate_all(freq, function(x) as.numeric(as.character(x))))
+  meltAF <- reshape2::melt(as.matrix(meanAF), value.name = "MeanEffectAlleleFrequency")
+  AFR <- subset(filtdf, REGION==superPop[2])
+  EUR <- subset(filtdf, REGION==superPop[1])
+  AFR <- na.omit(AFR)
+  EUR <- na.omit(EUR)
+  AFR_mean <- mean(AFR$Numeric)
+  EUR_mean <- mean(EUR$Numeric)
+  
+  avg_prev <- c(AFR_mean,EUR_mean,AFR_mean)
+  corr_data <- cbind(meltAF,avg_prev)
+  
+  plot <- ggplot(corr_data, aes(x = MeanEffectAlleleFrequency, y = avg_prev)) + geom_point() + geom_text(aes(label=Var1),hjust=0.5, vjust=2) + geom_smooth(method=lm, se=FALSE) + ggtitle("") +
+xlab("Average Super Population Effect Allele Frequency") + ylab("Average Super Population Obesity Prevalence %")
+  return(plot)
+}
 ```
+
 
 ## Appendix D: runPipeline
 ```{r, eval=FALSE, message=FALSE,echo=TRUE}
@@ -744,4 +765,4 @@ allPops <- function(input){
 
 3. Global Health Observatory, World Health Organization (The 2017 update). Prevalence of obesity among adults, BMI ≥ 30, age-standardized [Data table]. Retrieved from https://apps.who.int/gho/data/view.main.CTRY2450A?lang=en
 
-4. Li, C., & Wong, W. H. (2001). Model-based analysis of oligonucleotide arrays: expression index computation and outlier detection. Proceedings of the National Academy of Sciences of the United States of America, 98(1), 31–36. https://doi.org/10.1073/pnas.011404098
+4. Li, C., & Wong, W. H. (2001). Model-based analysis of oligonucleotide arrays: expression index computation and outlier detection (dChip). Proceedings of the National Academy of Sciences of the United States of America, 98(1), 31–36. https://doi.org/10.1073/pnas.011404098
