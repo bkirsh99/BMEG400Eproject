@@ -131,6 +131,7 @@ populateDfs <- function(input,list,rows,cols){
     }
   }
   
+  backgroundInfo["effect allele frequency"] <- backgroundInfo["effect allele frequency"] / length(list)
   return(list(popInfo,backgroundInfo))
   
 }
@@ -551,6 +552,7 @@ populateDfs <- function(input,list,rows,cols){
     }
   }
   
+  backgroundInfo["effect allele frequency"] <- backgroundInfo["effect allele frequency"] / length(list)
   return(list(popInfo,backgroundInfo))
   
 }
