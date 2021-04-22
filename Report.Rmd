@@ -62,7 +62,7 @@ library(here)
 
 ```{r, echo=FALSE}
 x <- tempfile()
-download.file("apps.who.int/gho/athena/api/GHO/NCD_BMI_30A.csv?filter=COUNTRY:*","WHO_BMI", mode = 'wb' )
+download.file("https://apps.who.int/gho/athena/api/GHO/NCD_BMI_30A.csv?filter=COUNTRY:*","WHO_BMI", mode = 'wb' )
 WHO_BMI <- read.csv('WHO_BMI')
 # removing NAs (missing values)
 WHO_BMI <- WHO_BMI[complete.cases(WHO_BMI), ]
@@ -113,6 +113,7 @@ plot_vis <- ggplot(filtregWHO_BMI, aes(x=YEAR)) +
         panel.grid.minor = element_blank())
 plot_vis
 ```
+
 ## Goals and scope of the re-analysis
 
 The original publication concluded that populations belonging to the same continental group showcased similar patterns in allele enrichment and depletion, suggesting that continent-specific environmental factors may shape the allele abundance of obesity-associated SNPs. In this re-analysis, however, we focus on the role of genetic factors, particularly ancestry-enrichment, by investigating admixed populations from geographically distant regions.
@@ -196,6 +197,7 @@ populateDfs <- function(input,list,rows,cols){
     }
   }
   
+  backgroundInfo["effect allele frequency"] <- backgroundInfo["effect allele frequency"] / length(list)
   return(list(popInfo,backgroundInfo))
   
 }
@@ -208,7 +210,7 @@ The bulk of this re-analysis consisted of two main interrogations, namely the in
 
 For the first portion, we conducted hypergeometric tests to assess if the effect allele of each SNP was enriched or depleted in the 3 populations as compared to the overall population average. The results of these tests were the foundation for many subsequent steps, including the production of Venn diagrams, heat maps, and tabulated data. For the second portion, we utilized the allele frequency data from the original publication to plot the distribution of effect allele frequency across the three populations.
 
-### *Quality control and filtering*
+### *Quality control and filtering* {#quality-control-and-filtering}
 
 As mentioned previously, the inputs of this re-analysis are essentially raw. Thus, we applied a series of processing steps for both statistical and visualization purposes.
 
@@ -218,7 +220,7 @@ Then, we conducted two separate hypergeometric tests for each of the 225 SNPs, o
 
 For further inspection of a smaller subset of SNPs from the original 225 obesity-related variants, we replicated the orinal methods and selected those with enrichment or depletion log10 transformed p-values of at least 10E-100 and genome-wide significance (5 × 10E-08) in GWA studies. This second data set was used to produce the risk (effect) allele frequency distribution plots.
 
-Once again, a set of helper functions were created to aid in data wrangling and hypothesis testing. These are available in [Appendix B: hyperTest, renameColsRows, and combineHyper](#appendix-b-hypertest-renamecolsrows-combinehyper). 
+Once again, a set of helper functions were created to aid in data wrangling and hypothesis testing. These are available in [Appendix B: hyperTest, renameColsRows, and combineHyper](#appendix-b-hypertest-renamecolsrows-combinehyper).
 
 ```{r, eval=TRUE,echo=FALSE}
 # function: "hyperTest": a function to perform the enrichment analysis using Fisher’s two-tail exact test (two hypergeometric tests, one for enrichment and another for depletion, are conducted per SNP)
@@ -433,7 +435,7 @@ depVenn
 
 ```
 
-The results from hypergeometric testing were also utilized to generate a heat map and visualize allele enrichment and depletion patterns among the three populations (Figure 3). If an effect allele was enriched, the cell was colored red based on the negative value of log10P, whereas if an effect allele was depleted, it was colored green based on the actual value of log10P. A hierarchical clustering of the three populations shows that the YRI and ASW populations generally share similar allele enrichment and depletion patterns. Nonetheless, there are also commonalities between the YRI and CEU populations. Lastly, cases of simultaneous significant enrichment in one population and depletion in another are observed between the CEU and ASW populations. In other words, they exhibit multiple SNPs with opposite directions in allele frequency changes, where effect alleles that are enriched in one population appear depleted in the other.  
+The results from hypergeometric testing were also utilized to generate a heat map and visualize allele enrichment and depletion patterns among the three populations (Figure 3). If an effect allele was enriched, the cell was colored red based on the negative value of log10P, whereas if an effect allele was depleted, it was colored green based on the actual value of log10P. A hierarchical clustering of the three populations shows that the YRI and ASW populations generally share similar allele enrichment and depletion patterns. Nonetheless, there are also commonalities between the YRI and CEU populations. Lastly, cases of simultaneous significant enrichment in one population and depletion in another are observed between the CEU and ASW populations. In other words, they exhibit multiple SNPs with opposite directions in allele frequency changes, where effect alleles that are enriched in one population appear depleted in the other.
 
 Overall, the YRI population actually appears to be the one that shares intermediate features between ASW and CEU, rather than the predicted admixed ASW population.
 
@@ -531,7 +533,7 @@ include_graphics("original_heatmap.jpg")
 
 # Conclusions
 
-In general, the results of this re-analysis are consistent with the literature. The additional study that investigated asthma-related variants in precisely the same three populations, ASW, CEU, and YRI, came to the strikingly similar conclusion that the ASW population displayed intermediate allele frequencies of obesity-related SNPs to the ancestral YRI and CEU populations. This conclusion cannot be extended to enrichment and depletion patterns, as the YRI population appeared to showcase intermediate characteristics between the ASW and CEU populations. This is somewhat in line with another conclusion made by the original study, which stated that "it is the allele frequencies, not the number of obesity-associated SNPs, that determine the outcome of composite scores." 
+In general, the results of this re-analysis are consistent with the literature. The additional study that investigated asthma-related variants in precisely the same three populations, ASW, CEU, and YRI, came to the strikingly similar conclusion that the ASW population displayed intermediate allele frequencies of obesity-related SNPs to the ancestral YRI and CEU populations. This conclusion cannot be extended to enrichment and depletion patterns, as the YRI population appeared to showcase intermediate characteristics between the ASW and CEU populations. This is somewhat in line with another conclusion made by the original study, which stated that "it is the allele frequencies, not the number of obesity-associated SNPs, that determine the outcome of composite scores."
 
 The differences between this project and the original publication, mainly the large discrepancy between the proportion of SNPs that possess effect alleles significantly enriched or depleted in at least one of the populations (i.e., 86.7% vs. 35.55%), is most likely due to the gross reduction in sample size from 26 down to 3. This impacted the hypergeometric tests and, thus, all analysis downstream of it.
 
@@ -540,7 +542,9 @@ When we leveled-off the comparison of this re-analysis to the original study by 
 Thus, we conclude that ancestral genetics might in fact play a role in the disease susceptibility to some extent. However, obesity and obesity-related traits are the product of combined effects of multiple different genetic variants and their interaction with surrounding environmental variables, so environmental factors such as diet, climate, local pathogens and lifestyle are large contributors as well.
 
 # Appendix
-## Appendix A: populateDfs
+
+## Appendix A: populateDfs {#appendix-a-populatedfs}
+
 ```{r, eval = TRUE, echo=TRUE, tidy=TRUE, tidy.opts=list(width.cutoff=60)}
 # function: "populateDfs": a function to populate data frames with user-specified population data from the original study
 # argument(s): "input": the table from the original publication
@@ -573,13 +577,14 @@ populateDfs <- function(input,list,rows,cols){
         as.numeric(backgroundInfo[["effect allele frequency"]]) + as.numeric(input[["effect allele frequency"]])
     }
   }
-  
+  backgroundInfo["effect allele frequency"] <- backgroundInfo["effect allele frequency"] / length(list)
   return(list(popInfo,backgroundInfo))
   
 }
 ```
 
 ## Appendix B: hyperTest, renameColsRows, and combineHyper
+
 ```{r, eval=TRUE,echo=TRUE}
 # function: "hyperTest": a function to perform the enrichment analysis using Fisher’s two-tail exact test (two hypergeometric tests, one for enrichment and another for depletion, are conducted per SNP)
 # argument(s): "list": a vector of population codes to be investigated in the re-analysis, as per 1000 Genomes convention
@@ -641,7 +646,9 @@ combineHyper <- function(dfs,rows){
   
 }
 ```
+
 ## Appendix C: makeVenn, makeHeatmap, and plotDist
+
 ```{r,eval=TRUE,echo=TRUE}
 # function: "makeVenn": a function to create a Venn diagram that illustrates the differences and similarities between the populations under investigation
 # argument(s): "df": a data frame of p-values (either enrichment or depletion)
@@ -715,6 +722,7 @@ plotDist <- function(df,frequency){
 ```
 
 ## Appendix D: runPipeline
+
 ```{r, eval=TRUE, message=FALSE,echo=TRUE}
 # function: "runPipeline": a function to run the entire pipeline for the oriinal study data and user-defined populations
 # argument(s): "input": a data frame containing data from the original publication
@@ -738,7 +746,9 @@ runPipeline <- function(input,list,sig){
   return(results)
 }
 ```
-## Appendix E: allPops
+
+## Appendix E: allPops {#appendix-e-allpops}
+
 ```{r, eval = TRUE,echo=TRUE}
 # function: "allPops": a function to retrieve the names of all surveyed populations (26)
 # argument(s): "input": the table from the original publication
@@ -752,5 +762,7 @@ allPops <- function(input){
   return(list)
 }
 ```
+
 # Bibliography
-Mao, L., Fang, Y., Campbell, M. et al. Population differentiation in allele frequencies of obesity-associated SNPs. BMC Genomics 18, 861 (2017). https://doi.org/10.1186/s12864-017-4262-9
+
+Mao, L., Fang, Y., Campbell, M. et al. Population differentiation in allele frequencies of obesity-associated SNPs. BMC Genomics 18, 861 (2017). <https://doi.org/10.1186/s12864-017-4262-9>
